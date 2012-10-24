@@ -22,6 +22,9 @@ public class Natal implements Game {
 	
 	private Surface terrain;
 	private SurfaceLayer terrainLayer;
+	
+	private GroupLayer.Clipped terrainGroup;
+	
 	private ImageLayer image;
 
 	@Override
@@ -42,20 +45,25 @@ public class Natal implements Game {
 
 		terrainLayer = graphics().createSurfaceLayer(screenWidth, screenHeight / 3);
 		terrainLayer.setTranslation(0, screenHeight - screenHeight / 3);
-		terrainLayer.setScale(1, 1);
 		graphics().rootLayer().add(terrainLayer);
+		
+		terrainGroup = graphics().createGroupLayer(screenWidth, screenHeight / 3);
+		terrainGroup.setTranslation(0, screenHeight - screenHeight * (2f/3));
+		graphics().rootLayer().add(terrainGroup);
 		
 		terrain = terrainLayer.surface();
 		
 		Image o = createObjectView(ObjectType.CHIMNEY);
 		terrain.drawImage(o, screenWidth * (1f/4), terrain.height() - o.height());
+		terrainGroup.addAt(graphics().createImageLayer(o), screenWidth * (1f/4), terrainGroup.height() - o.height());
 		
 		o = createObjectView(ObjectType.CHIMNEY);
 		terrain.drawImage(o, screenWidth * (3f/4), terrain.height() - o.height());
+		terrainGroup.addAt(graphics().createImageLayer(o), screenWidth * (3f/4), terrainGroup.height() - o.height());
 		
 		o = createObjectView(ObjectType.CHIMNEY);
 		terrain.drawImage(o, screenWidth * (7f/8), terrain.height() - o.height());
-		
+		terrainGroup.addAt(graphics().createImageLayer(o), screenWidth * (7f/8), terrainGroup.height() - o.height());
 
 		
 		
@@ -89,13 +97,14 @@ public class Natal implements Game {
 
 	float rotation = 0;
 	float newRotation = 0;
-	float vx = 0.1f;
+	float vx = 0.15f;
 	float x = 0;
 	@Override
 	public void update(float delta) {
 		x += vx * delta;
 	
 		terrainLayer.setTranslation(-x, terrainLayer.transform().ty());
+		terrainGroup.setTranslation(-x, terrainGroup.transform().ty());
 		
 		//terrain.setFillColor(Color.rgb(255, 0, 0));
 		//terrain.fillRect(10, 10, terrain.width()-10, terrain.height()-10);
