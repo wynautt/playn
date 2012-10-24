@@ -1,0 +1,10 @@
+<module rename-to='natal'>
+  <inherits name='playn.PlayN'/>
+
+  <source path='core'/>
+  <source path='html'/>
+
+  <public path="resources" />
+
+  <entry-point class='pt.bombap.playn.natal.html.NatalHtml'/>
+</module>
