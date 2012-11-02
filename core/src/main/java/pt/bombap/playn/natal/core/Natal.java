@@ -33,16 +33,13 @@ import playn.core.SurfaceLayer;
 public class Natal implements Game {
 	// scale difference between screen space (pixels) and world space (physics).
 	
-
 	private float screenWidth = 0.0f;
 	private float screenHeight = 0.0f;
 
 	private Surface terrain;
 	private SurfaceLayer[] terrainLayer;
 
-	// main layer that holds the world. note: this gets scaled to world space
-	private GroupLayer worldLayer;
-
+	
 	// main world
 	private NatalWorld world = null;
 
@@ -56,55 +53,81 @@ public class Natal implements Game {
 		screenWidth = graphics().width();
 		screenHeight = graphics().height();
 
-		log().debug("" + (screenHeight - screenHeight / 3));
-		log().debug("" + screenWidth * (3/4));
+		
+		log().debug("" + screenWidth);
+		log().debug("" + screenHeight);
 
 		bgLayer.setSize(screenWidth, screenHeight);
 
 		graphics().rootLayer().add(bgLayer);
 
+		world = new NatalWorld(GameWorld.normalizeWidth(24));
 		
-
-		terrainLayer = new SurfaceLayer[] {
-				graphics().createSurfaceLayer(screenWidth, screenHeight / 3),
-				graphics().createSurfaceLayer(screenWidth, screenHeight / 3),
-		};
-
-		terrainLayer[0].setTranslation(0, screenHeight - screenHeight / 3);
-		terrainLayer[1].setTranslation(0, screenHeight - screenHeight / 3);
-
-		graphics().rootLayer().add(terrainLayer[0]);
-		graphics().rootLayer().add(terrainLayer[1]);
-
-
-		terrain = terrainLayer[0].surface();
-
-		ObjectView o = createObjectView(ObjectType.CHIMNEY);
-		float y = terrain.height() - o.getHeight();
-		terrain.drawImage(o.getImage(), screenWidth * (1f/4), y);
-
-		o = createObjectView(ObjectType.CHIMNEY);
-		terrain.drawImage(o.getImage(), screenWidth * (3f/4), y);
-
-		o = createObjectView(ObjectType.CHIMNEY);
-		terrain.drawImage(o.getImage(), screenWidth * (7f/8), y);
-
-		o = createObjectView(ObjectType.CHIMNEY);
-		terrainLayer[1].surface().drawImage(o.getImage(), screenWidth * (1f/2), terrainLayer[1].surface().height() - o.getImage().height());
-
+		world.setDt(1.0f/40.0f);
+		
+		world.addEntity(new Chimney(world, 10.0f, 15.0f, 0.0f));
+		world.addEntity(new Chimney(world, 15.0f, 15.0f, 0.0f));
+		world.addEntity(new Chimney(world, 20.0f, 15.0f, 0.0f));
+		
+		world.addEntity(new Present(world, 10.0f, 0.0f, 0.0f));
+		world.addEntity(new Present(world, 11.5f, 0.0f, 0.0f));
+		world.addEntity(new Present(world, 12.0f, 0.0f, 0.0f));
+		world.addEntity(new Present(world, 13.0f, 0.0f, 0.0f));
+		world.addEntity(new Present(world, 14.0f, 0.0f, 0.0f));
+		
 		pointer().setListener(new Pointer.Adapter(){
 
 			@Override
 			public void onPointerEnd(Event event) {
 				super.onPointerEnd(event);
-				ObjectView present = createObjectView(ObjectType.PRESENT);
-
-				drawPresent(present.getLayer(), event.x(), event.y());
-
+				Present present = new Present(world, world.getPhysUnitPerScreenUnit() * event.x(), world.getPhysUnitPerScreenUnit() * event.y(), 0.0f);
+				world.addEntity(present);
 			}
 		});
 
-		initWorld();
+		
+		//new Chimney(world, world.getWorldWidth(), world.getWorldHeight(), 90.0f * DEGTORAD);
+
+//		terrainLayer = new SurfaceLayer[] {
+//				graphics().createSurfaceLayer(screenWidth, screenHeight / 3),
+//				graphics().createSurfaceLayer(screenWidth, screenHeight / 3),
+//		};
+//
+//		terrainLayer[0].setTranslation(0, screenHeight - screenHeight / 3);
+//		terrainLayer[1].setTranslation(0, screenHeight - screenHeight / 3);
+//
+//		graphics().rootLayer().add(terrainLayer[0]);
+//		graphics().rootLayer().add(terrainLayer[1]);
+//
+//
+//		terrain = terrainLayer[0].surface();
+//
+//		ObjectView o = createObjectView(ObjectType.CHIMNEY);
+//		float y = terrain.height() - o.getHeight();
+//		terrain.drawImage(o.getImage(), screenWidth * (1f/4), y);
+//
+//		o = createObjectView(ObjectType.CHIMNEY);
+//		terrain.drawImage(o.getImage(), screenWidth * (3f/4), y);
+//
+//		o = createObjectView(ObjectType.CHIMNEY);
+//		terrain.drawImage(o.getImage(), screenWidth * (7f/8), y);
+//
+//		o = createObjectView(ObjectType.CHIMNEY);
+//		terrainLayer[1].surface().drawImage(o.getImage(), screenWidth * (1f/2), terrainLayer[1].surface().height() - o.getImage().height());
+//
+//		pointer().setListener(new Pointer.Adapter(){
+//
+//			@Override
+//			public void onPointerEnd(Event event) {
+//				super.onPointerEnd(event);
+//				ObjectView present = createObjectView(ObjectType.PRESENT);
+//
+//				drawPresent(present.getLayer(), event.x(), event.y());
+//
+//			}
+//		});
+//
+//		initWorld();
 
 	}
 
@@ -163,6 +186,7 @@ public class Natal implements Game {
 
 	@Override
 	public void paint(float alpha) {
+		world.paint(alpha);
 		// the background automatically paints itself, so no need to do anything here!
 		//		float rot = (this.newRotation * alpha) + (this.rotation * (1f - alpha));
 		//
@@ -181,49 +205,36 @@ public class Natal implements Game {
 	int inactiveTerrain = 1;
 	@Override
 	public void update(float delta) {
-
-	
-		x += vx * delta;
-
-		log().debug("" + (x % 200));
-
-		terrainLayer[activeTerrain].setTranslation(-x, terrainLayer[activeTerrain].transform().ty());
-		terrainLayer[inactiveTerrain].setTranslation(-x + screenWidth, terrainLayer[inactiveTerrain].transform().ty());
-
-		//		if((x % 200) < 2) {
-		//			log().debug("add object");
-		//			addObjectToTerrain(0, 0);
-		//		}
-
-		log().debug(""+ (x >= screenWidth));
-
-
-		if(x >= screenWidth) {
-			x = 0;
-			terrainLayer[activeTerrain].setTranslation(screenWidth, terrainLayer[activeTerrain].transform().ty());
-			terrainLayer[activeTerrain].surface().clear();
-
-			Surface surf = terrainLayer[activeTerrain].surface();
-			ObjectView o = createObjectView(ObjectType.CHIMNEY);
-			float y = surf.height() - o.getHeight();
-			float prev = 1;
-
-			surf.drawImage(o.getImage(), prev = screenWidth * random() *(1f/4), y);
-
-			o = createObjectView(ObjectType.CHIMNEY);
-			surf.drawImage(o.getImage(), prev = o.getWidth() + prev + (screenWidth - prev) * random() * (2f/3), y);
-
-			o = createObjectView(ObjectType.CHIMNEY);
-			surf.drawImage(o.getImage(), o.getWidth() + prev + (screenWidth - prev) * random(), y);
-
-
-			int tmp = activeTerrain;
-			activeTerrain = inactiveTerrain;
-			inactiveTerrain = tmp;
-		}
-
-		//terrain.setFillColor(Color.rgb(255, 0, 0));
-		//terrain.fillRect(10, 10, terrain.width()-10, terrain.height()-10);
+		world.update(delta);
+//		x += vx * delta;
+//
+//		terrainLayer[activeTerrain].setTranslation(-x, terrainLayer[activeTerrain].transform().ty());
+//		terrainLayer[inactiveTerrain].setTranslation(-x + screenWidth, terrainLayer[inactiveTerrain].transform().ty());
+//
+//		if(x >= screenWidth) {
+//			x = 0;
+//			terrainLayer[activeTerrain].setTranslation(screenWidth, terrainLayer[activeTerrain].transform().ty());
+//			terrainLayer[activeTerrain].surface().clear();
+//
+//			Surface surf = terrainLayer[activeTerrain].surface();
+//			ObjectView o = createObjectView(ObjectType.CHIMNEY);
+//			float y = surf.height() - o.getHeight();
+//			float prev = 1;
+//
+//			surf.drawImage(o.getImage(), prev = screenWidth * random() *(1f/4), y);
+//
+//			o = createObjectView(ObjectType.CHIMNEY);
+//			surf.drawImage(o.getImage(), prev = o.getWidth() + prev + (screenWidth - prev) * random() * (2f/3), y);
+//
+//			o = createObjectView(ObjectType.CHIMNEY);
+//			surf.drawImage(o.getImage(), o.getWidth() + prev + (screenWidth - prev) * random(), y);
+//
+//
+//			int tmp = activeTerrain;
+//			activeTerrain = inactiveTerrain;
+//			inactiveTerrain = tmp;
+//		}
+		
 	}
 
 
@@ -231,6 +242,7 @@ public class Natal implements Game {
 	@Override
 	public int updateRate() {
 		//return 50; // 20fps
-		return 0;
+		return 25; // 40fps
+		//return 16; //60fps
 	}
 }

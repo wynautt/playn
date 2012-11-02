@@ -2,6 +2,9 @@ package pt.bombap.playn.natal.core;
 
 import static playn.core.PlayN.graphics;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.callbacks.ContactListener;
 import org.jbox2d.callbacks.DebugDraw;
@@ -20,8 +23,14 @@ import playn.core.GroupLayer;
 public abstract class GameWorld implements ContactListener {
 	private static boolean showDebugDraw = false;
 
+	// main layer that holds the world. note: this gets scaled to world space
 	protected GroupLayer worldLayer;
 	
+	protected List<Entity> entities = new ArrayList<Entity>(10);
+	
+	//default for 640x480
+	//screenWidth = (1 / physUnitPerScreenUnit) * worldWidth 
+	//screenHeight = (1 / physUnitPerScreenUnit) * worldHeight
 	protected float physUnitPerScreenUnit = 1 / 26.666667f;
 
 	// size of world
@@ -38,7 +47,20 @@ public abstract class GameWorld implements ContactListener {
 
 	private DebugDrawBox2D debugDraw;
 
+	public static int normalizeWidth(int width) {
+		float ratio = (float)graphics().width() / graphics().height();
+		
+		while(((int)((width++ / ratio) * 100)) % 100 > 9);
+		
+		return width - 1;
+		
+	}
 
+	public GameWorld(int width) {
+		this((float)width / graphics().width(), width, (int)(graphics().height() * ((float)width / graphics().width())));
+				
+	}
+	
 	//worldLayer is a scaled layer
 	public GameWorld(float physUnitPerScreenUnit, int width, int height) {
 
@@ -48,6 +70,7 @@ public abstract class GameWorld implements ContactListener {
 		
 		worldLayer = graphics().createGroupLayer();
 		worldLayer.setScale(1f / physUnitPerScreenUnit);
+		
 		graphics().rootLayer().add(worldLayer);
 
 		// create the physics world
@@ -79,7 +102,7 @@ public abstract class GameWorld implements ContactListener {
 
 		// the step delta is fixed so box2d isn't affected by framerate
 		world.step(dt, velocityIterations, positionIterations);
-		postStepUpdate();
+		postStepUpdate(delta);
 	}
 
 	public void paint(float delta) {
@@ -91,9 +114,9 @@ public abstract class GameWorld implements ContactListener {
 	}
 
 
-	protected abstract void postStepUpdate();
+	protected abstract void postStepUpdate(float delta);
 	protected abstract void preStepUpdate(float delta);
-	protected abstract void worldPaint(float delta);
+	protected abstract void worldPaint(float alpha);
 
 
 	@Override
@@ -152,6 +175,17 @@ public abstract class GameWorld implements ContactListener {
 		return world;
 	}
 
+	public int getWorldWidth() {
+		return worldWidth;
+	}
+
+	public int getWorldHeight() {
+		return worldHeight;
+	}
+
+	public void addEntity(Entity entity) {
+		entities.add(entity);
+	}
 
 
 }

@@ -18,18 +18,27 @@ import playn.core.DebugDrawBox2D;
 import playn.core.GroupLayer;
 
 public class NatalWorld extends GameWorld {
-	public static int worldWidth = 24;
-	public static int worldHeight = 18;
-	public static float physUnitPerScreenUnit = 1 / 26.666667f;
-	
-	public GroupLayer staticLayerBack;
-	public GroupLayer dynamicLayer;
-	public GroupLayer staticLayerFront;
+	public static int worldWidth = 32;
+	public static int worldHeight = 24;
+	//public static float physUnitPerScreenUnit = 1 / 26.666667f;
+	public static float physUnitPerScreenUnit = 1 / 20.0f;
 
-	
+
+	private GroupLayer staticLayerBack;
+	private GroupLayer dynamicLayer;
+	private GroupLayer staticLayerFront;
+
+	public NatalWorld(int width) {
+		super(width);
+		init();
+	}
+
 	public NatalWorld() {
 		super(physUnitPerScreenUnit, worldWidth, worldHeight);
-		
+		init();
+	}
+
+	public void init() {
 		staticLayerBack = graphics().createGroupLayer();
 		worldLayer.add(staticLayerBack);
 		dynamicLayer = graphics().createGroupLayer();
@@ -54,8 +63,25 @@ public class NatalWorld extends GameWorld {
 		wallRight.createFixture(wallRightShape, 0.0f);
 
 	}
-	
-	
+
+	public GroupLayer getStaticLayerBack() {
+		return staticLayerBack;
+	}
+
+
+
+	public GroupLayer getDynamicLayer() {
+		return dynamicLayer;
+	}
+
+
+
+	public GroupLayer getStaticLayerFront() {
+		return staticLayerFront;
+	}
+
+
+
 	@Override
 	public void beginContact(Contact contact) {
 	}
@@ -73,14 +99,20 @@ public class NatalWorld extends GameWorld {
 	}
 
 	@Override
-	protected void postStepUpdate() {
+	protected void postStepUpdate(float delta) {
 	}
 
 	@Override
 	protected void preStepUpdate(float delta) {
+		for(Entity e: entities) {
+			e.update(delta);
+		}
 	}
 
 	@Override
-	protected void worldPaint(float delta) {
+	protected void worldPaint(float alpha) {
+		for(Entity e: entities) {
+			e.paint(alpha);
+		}
 	}
 }
