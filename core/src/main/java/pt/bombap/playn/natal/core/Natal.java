@@ -1,31 +1,51 @@
 package pt.bombap.playn.natal.core;
 
 import static playn.core.PlayN.*;
+import static pt.bombap.playn.natal.core.MathUtils.*;
 
-import javax.swing.text.html.HTMLDocument.HTMLReader.SpecialAction;
+import javax.sql.PooledConnection;
 
-import playn.core.Canvas;
-import playn.core.CanvasImage;
-import playn.core.CanvasLayer;
-import playn.core.Color;
+import org.jbox2d.collision.Distance;
+import org.jbox2d.collision.shapes.CircleShape;
+import org.jbox2d.collision.shapes.PolygonShape;
+import org.jbox2d.collision.shapes.Shape;
+import org.jbox2d.collision.shapes.ShapeType;
+import org.jbox2d.common.Settings;
+import org.jbox2d.common.Vec2;
+import org.jbox2d.dynamics.Body;
+import org.jbox2d.dynamics.BodyDef;
+import org.jbox2d.dynamics.BodyType;
+import org.jbox2d.dynamics.FixtureDef;
+import org.jbox2d.dynamics.World;
+import org.jbox2d.dynamics.contacts.Contact;
+import org.jbox2d.pooling.WorldPool;
+
 import playn.core.Game;
 import playn.core.GroupLayer;
 import playn.core.Image;
 import playn.core.ImageLayer;
-import playn.core.Layer;
+import playn.core.PlayN;
+import playn.core.Pointer;
+import playn.core.Pointer.Event;
 import playn.core.Surface;
 import playn.core.SurfaceLayer;
 
 public class Natal implements Game {
+	// scale difference between screen space (pixels) and world space (physics).
+	
+
 	private float screenWidth = 0.0f;
 	private float screenHeight = 0.0f;
-	
+
 	private Surface terrain;
-	private SurfaceLayer terrainLayer;
-	
-	private GroupLayer.Clipped terrainGroup;
-	
-	private ImageLayer image;
+	private SurfaceLayer[] terrainLayer;
+
+	// main layer that holds the world. note: this gets scaled to world space
+	private GroupLayer worldLayer;
+
+	// main world
+	private NatalWorld world = null;
+
 
 	@Override
 	public void init() {
@@ -35,50 +55,108 @@ public class Natal implements Game {
 
 		screenWidth = graphics().width();
 		screenHeight = graphics().height();
-		
+
 		log().debug("" + (screenHeight - screenHeight / 3));
 		log().debug("" + screenWidth * (3/4));
-		
+
 		bgLayer.setSize(screenWidth, screenHeight);
 
 		graphics().rootLayer().add(bgLayer);
 
-		terrainLayer = graphics().createSurfaceLayer(screenWidth, screenHeight / 3);
-		terrainLayer.setTranslation(0, screenHeight - screenHeight / 3);
-		graphics().rootLayer().add(terrainLayer);
 		
-		terrainGroup = graphics().createGroupLayer(screenWidth, screenHeight / 3);
-		terrainGroup.setTranslation(0, screenHeight - screenHeight * (2f/3));
-		graphics().rootLayer().add(terrainGroup);
-		
-		terrain = terrainLayer.surface();
-		
-		Image o = createObjectView(ObjectType.CHIMNEY);
-		terrain.drawImage(o, screenWidth * (1f/4), terrain.height() - o.height());
-		terrainGroup.addAt(graphics().createImageLayer(o), screenWidth * (1f/4), terrainGroup.height() - o.height());
-		
-		o = createObjectView(ObjectType.CHIMNEY);
-		terrain.drawImage(o, screenWidth * (3f/4), terrain.height() - o.height());
-		terrainGroup.addAt(graphics().createImageLayer(o), screenWidth * (3f/4), terrainGroup.height() - o.height());
-		
-		o = createObjectView(ObjectType.CHIMNEY);
-		terrain.drawImage(o, screenWidth * (7f/8), terrain.height() - o.height());
-		terrainGroup.addAt(graphics().createImageLayer(o), screenWidth * (7f/8), terrainGroup.height() - o.height());
 
-		
-		
+		terrainLayer = new SurfaceLayer[] {
+				graphics().createSurfaceLayer(screenWidth, screenHeight / 3),
+				graphics().createSurfaceLayer(screenWidth, screenHeight / 3),
+		};
+
+		terrainLayer[0].setTranslation(0, screenHeight - screenHeight / 3);
+		terrainLayer[1].setTranslation(0, screenHeight - screenHeight / 3);
+
+		graphics().rootLayer().add(terrainLayer[0]);
+		graphics().rootLayer().add(terrainLayer[1]);
+
+
+		terrain = terrainLayer[0].surface();
+
+		ObjectView o = createObjectView(ObjectType.CHIMNEY);
+		float y = terrain.height() - o.getHeight();
+		terrain.drawImage(o.getImage(), screenWidth * (1f/4), y);
+
+		o = createObjectView(ObjectType.CHIMNEY);
+		terrain.drawImage(o.getImage(), screenWidth * (3f/4), y);
+
+		o = createObjectView(ObjectType.CHIMNEY);
+		terrain.drawImage(o.getImage(), screenWidth * (7f/8), y);
+
+		o = createObjectView(ObjectType.CHIMNEY);
+		terrainLayer[1].surface().drawImage(o.getImage(), screenWidth * (1f/2), terrainLayer[1].surface().height() - o.getImage().height());
+
+		pointer().setListener(new Pointer.Adapter(){
+
+			@Override
+			public void onPointerEnd(Event event) {
+				super.onPointerEnd(event);
+				ObjectView present = createObjectView(ObjectType.PRESENT);
+
+				drawPresent(present.getLayer(), event.x(), event.y());
+
+			}
+		});
+
+		initWorld();
+
 	}
 
+	public void initWorld() {
+		Vec2 gravity = new Vec2(0.0f, -10.0f);
+		World world = new World(gravity, true);
 
-	public Image createObjectView(ObjectType type) {
-		float w = screenWidth / 10;
-		float h = screenHeight / 4;
+		
 
-		CanvasImage chimney = graphics().createImage(w, h);
-		Canvas canvas = chimney.canvas();
-		canvas.setFillColor(Color.rgb(0, 0, 255));
-		canvas.fillRect(0, 0, w, h);
-		return chimney;
+		//1
+		BodyDef groundBodyDef = new BodyDef();
+		groundBodyDef.position.set(0.0f, -10f);
+
+		Body groundBody = world.createBody(groundBodyDef);
+		//1
+		PolygonShape groundBox = new PolygonShape();
+		groundBox.setAsBox(50.0f, 10.0f);
+
+		groundBody.createFixture(groundBox, 0.0f);
+
+		BodyDef bodyDef = new BodyDef();
+		bodyDef.position.set(0.0f, 4.0f);
+		bodyDef.type = BodyType.DYNAMIC;
+
+		Body body = world.createBody(bodyDef);
+
+		PolygonShape bodyShape = new PolygonShape();
+		bodyShape.setAsBox(1.0f, 1.0f);
+
+		FixtureDef bodyFixture = new FixtureDef();
+		bodyFixture.density = 1.0f;
+		bodyFixture.friction = 0.3f;
+		bodyFixture.shape = bodyShape;
+		
+
+	}
+
+	public void drawPresent(ImageLayer present, float x, float y) {
+		present.setTranslation(x, y);
+		graphics().rootLayer().add(present);
+	}
+
+	public ObjectView createObjectView(ObjectType type) {
+		switch (type) {
+		case PRESENT:
+			return new PresentView();
+		case CHIMNEY:
+			return new ChimneyView();
+		default:
+			return null;
+		}
+
 	}
 
 
@@ -99,16 +177,56 @@ public class Natal implements Game {
 	float newRotation = 0;
 	float vx = 0.15f;
 	float x = 0;
+	int activeTerrain = 0;
+	int inactiveTerrain = 1;
 	@Override
 	public void update(float delta) {
-		x += vx * delta;
+
 	
-		terrainLayer.setTranslation(-x, terrainLayer.transform().ty());
-		terrainGroup.setTranslation(-x, terrainGroup.transform().ty());
-		
+		x += vx * delta;
+
+		log().debug("" + (x % 200));
+
+		terrainLayer[activeTerrain].setTranslation(-x, terrainLayer[activeTerrain].transform().ty());
+		terrainLayer[inactiveTerrain].setTranslation(-x + screenWidth, terrainLayer[inactiveTerrain].transform().ty());
+
+		//		if((x % 200) < 2) {
+		//			log().debug("add object");
+		//			addObjectToTerrain(0, 0);
+		//		}
+
+		log().debug(""+ (x >= screenWidth));
+
+
+		if(x >= screenWidth) {
+			x = 0;
+			terrainLayer[activeTerrain].setTranslation(screenWidth, terrainLayer[activeTerrain].transform().ty());
+			terrainLayer[activeTerrain].surface().clear();
+
+			Surface surf = terrainLayer[activeTerrain].surface();
+			ObjectView o = createObjectView(ObjectType.CHIMNEY);
+			float y = surf.height() - o.getHeight();
+			float prev = 1;
+
+			surf.drawImage(o.getImage(), prev = screenWidth * random() *(1f/4), y);
+
+			o = createObjectView(ObjectType.CHIMNEY);
+			surf.drawImage(o.getImage(), prev = o.getWidth() + prev + (screenWidth - prev) * random() * (2f/3), y);
+
+			o = createObjectView(ObjectType.CHIMNEY);
+			surf.drawImage(o.getImage(), o.getWidth() + prev + (screenWidth - prev) * random(), y);
+
+
+			int tmp = activeTerrain;
+			activeTerrain = inactiveTerrain;
+			inactiveTerrain = tmp;
+		}
+
 		//terrain.setFillColor(Color.rgb(255, 0, 0));
 		//terrain.fillRect(10, 10, terrain.width()-10, terrain.height()-10);
 	}
+
+
 
 	@Override
 	public int updateRate() {

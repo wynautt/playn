@@ -1,0 +1,6 @@
+{
+  "urls": ["sprites/chimney1.jpg"],
+  "sprites": [
+    {"id": "c1", "url": 0, "x": 0, "y": 0, "w": 90, "h": 135}
+  ]
+}

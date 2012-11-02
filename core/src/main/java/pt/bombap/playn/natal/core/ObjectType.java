@@ -2,6 +2,7 @@ package pt.bombap.playn.natal.core;
 
 public enum ObjectType {
 
-	CHIMNEY
+	CHIMNEY,
+	PRESENT
 	
 }
