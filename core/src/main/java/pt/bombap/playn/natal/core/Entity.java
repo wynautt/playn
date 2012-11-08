@@ -82,5 +82,6 @@ public abstract class Entity {
 	}
 	
 	protected abstract View createView();
+	protected abstract void destroy(GameWorld gameWorld);
 
 }

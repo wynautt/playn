@@ -3,7 +3,9 @@ package pt.bombap.playn.natal.core;
 import static playn.core.PlayN.graphics;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.callbacks.ContactListener;
@@ -20,14 +22,28 @@ import playn.core.CanvasImage;
 import playn.core.DebugDrawBox2D;
 import playn.core.GroupLayer;
 
-public abstract class GameWorld implements ContactListener {
-	private static boolean showDebugDraw = false;
+/**
+ * default axis orientation
+ *   -----> x
+ *  |
+ *  |
+ *  |
+ *  |
+ *  y
+ * @author admin
+ *
+ */
+public abstract class GameWorld implements IGameWorld, ContactListener {
+	private static boolean showDebugDraw = true;
 
 	// main layer that holds the world. note: this gets scaled to world space
 	protected GroupLayer worldLayer;
-	
+
 	protected List<Entity> entities = new ArrayList<Entity>(10);
-	
+	protected HashMap<Body, PhysicsEntity> bodyEntityTable = new HashMap<Body, PhysicsEntity>();
+	protected Stack<Contact> contacts = new Stack<Contact>();
+
+
 	//default for 640x480
 	//screenWidth = (1 / physUnitPerScreenUnit) * worldWidth 
 	//screenHeight = (1 / physUnitPerScreenUnit) * worldHeight
@@ -49,28 +65,28 @@ public abstract class GameWorld implements ContactListener {
 
 	public static int normalizeWidth(int width) {
 		float ratio = (float)graphics().width() / graphics().height();
-		
+
 		while(((int)((width++ / ratio) * 100)) % 100 > 9);
-		
+
 		return width - 1;
-		
+
 	}
 
 	public GameWorld(int width) {
 		this((float)width / graphics().width(), width, (int)(graphics().height() * ((float)width / graphics().width())));
-				
+
 	}
-	
+
 	//worldLayer is a scaled layer
 	public GameWorld(float physUnitPerScreenUnit, int width, int height) {
 
 		this.physUnitPerScreenUnit = physUnitPerScreenUnit;
 		this.worldWidth = width;
 		this.worldHeight = height;
-		
+
 		worldLayer = graphics().createGroupLayer();
 		worldLayer.setScale(1f / physUnitPerScreenUnit);
-		
+
 		graphics().rootLayer().add(worldLayer);
 
 		// create the physics world
@@ -113,14 +129,28 @@ public abstract class GameWorld implements ContactListener {
 		worldPaint(delta);
 	}
 
+	public void preStepUpdate(float delta) {
+		for(Entity e: entities) {
+			e.update(delta);
+		}
+	}
 
-	protected abstract void postStepUpdate(float delta);
-	protected abstract void preStepUpdate(float delta);
-	protected abstract void worldPaint(float alpha);
+	public void postStepUpdate(float delta) {
+		processContacts();
+	}
+
+	public void worldPaint(float alpha) {
+		for(Entity e: entities) {
+			e.paint(alpha);
+		}
+	}
+
+
 
 
 	@Override
 	public void beginContact(Contact contact) {
+		contacts.push(contact);
 	}
 
 	@Override
@@ -185,6 +215,39 @@ public abstract class GameWorld implements ContactListener {
 
 	public void addEntity(Entity entity) {
 		entities.add(entity);
+		if (entity instanceof PhysicsEntity) {
+			PhysicsEntity physicsEntity = (PhysicsEntity) entity;
+			bodyEntityTable.put(physicsEntity.getBody(), physicsEntity);
+		}
+	}
+	
+	public void removeEntity(Entity entity) {
+		entities.remove(entity);
+		if (entity instanceof PhysicsEntity) {
+			PhysicsEntity physicsEntity = (PhysicsEntity) entity;
+			bodyEntityTable.remove(physicsEntity.getBody());
+		}
+	}
+
+
+	// handle contacts out of physics loop
+	public void processContacts() {
+		while (!contacts.isEmpty()) {
+			Contact contact = contacts.pop();
+
+			// handle collision
+			PhysicsEntity entityA = bodyEntityTable.get(contact.m_fixtureA.m_body);
+			PhysicsEntity entityB = bodyEntityTable.get(contact.m_fixtureB.m_body);
+
+			if (entityA != null && entityB != null) {
+				if (entityA instanceof PhysicsEntity.HasContactListener) {
+					((PhysicsEntity.HasContactListener) entityA).contact(entityB, contact.getFixtureA(), contact.getFixtureB(), contact);
+				}
+				if (entityB instanceof PhysicsEntity.HasContactListener) {
+					((PhysicsEntity.HasContactListener) entityB).contact(entityA, contact.getFixtureB(), contact.getFixtureA(), contact);
+				}
+			}
+		}
 	}
 
 

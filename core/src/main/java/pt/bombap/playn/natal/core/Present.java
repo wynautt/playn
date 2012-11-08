@@ -30,7 +30,7 @@ public class Present extends NatalDynamicEntity {
 		fixtureDef.shape = circleShape;
 		fixtureDef.density = 0.4f;
 		fixtureDef.friction = 0.1f;
-		fixtureDef.restitution = random();
+		fixtureDef.restitution = 0.0f;
 		circleShape.m_p.set(0, 0);
 		body.createFixture(fixtureDef);
 		body.setLinearDamping(0.2f);

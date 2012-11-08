@@ -65,9 +65,9 @@ public class Natal implements Game {
 		
 		world.setDt(1.0f/40.0f);
 		
-		world.addEntity(new Chimney(world, 10.0f, 15.0f, 0.0f));
-		world.addEntity(new Chimney(world, 15.0f, 15.0f, 0.0f));
-		world.addEntity(new Chimney(world, 20.0f, 15.0f, 0.0f));
+		world.addEntity(new Chimney(world, 10.0f, 12.0f, 0.0f));
+		world.addEntity(new Chimney(world, 15.0f, 12.0f, 0.0f));
+		world.addEntity(new Chimney(world, 20.0f, 12.0f, 0.0f));
 		
 		world.addEntity(new Present(world, 10.0f, 0.0f, 0.0f));
 		world.addEntity(new Present(world, 11.5f, 0.0f, 0.0f));
@@ -82,6 +82,9 @@ public class Natal implements Game {
 				super.onPointerEnd(event);
 				Present present = new Present(world, world.getPhysUnitPerScreenUnit() * event.x(), world.getPhysUnitPerScreenUnit() * event.y(), 0.0f);
 				world.addEntity(present);
+				Vec2 currentV = present.getBody().getLinearVelocity();
+				present.getBody().setLinearVelocity(new Vec2(10, currentV.y));
+				
 			}
 		});
 

@@ -20,5 +20,9 @@ public abstract class NatalEntity extends StaticPhysicsEntity {
 	public void initPostLoad(GameWorld gameWorld) {
 	}
 
+	@Override
+	protected void destroy(GameWorld gameWorld) {
+		((NatalWorld)gameWorld).getStaticLayerFront().remove(getView().getLayer());
+	}
 	
 }

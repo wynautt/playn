@@ -20,5 +20,9 @@ public abstract class NatalDynamicEntity extends DynamicPhysicsEntity {
 	public void initPostLoad(GameWorld gameWorld) {
 	}
 
+	@Override
+	protected void destroy(GameWorld gameWorld) {
+		((NatalWorld)gameWorld).getDynamicLayer().remove(getView().getLayer());
+	}
 	
 }

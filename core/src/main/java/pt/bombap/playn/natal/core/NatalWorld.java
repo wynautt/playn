@@ -81,38 +81,4 @@ public class NatalWorld extends GameWorld {
 	}
 
 
-
-	@Override
-	public void beginContact(Contact contact) {
-	}
-
-	@Override
-	public void endContact(Contact contact) {
-	}
-
-	@Override
-	public void preSolve(Contact contact, Manifold oldManifold) {
-	}
-
-	@Override
-	public void postSolve(Contact contact, ContactImpulse impulse) {
-	}
-
-	@Override
-	protected void postStepUpdate(float delta) {
-	}
-
-	@Override
-	protected void preStepUpdate(float delta) {
-		for(Entity e: entities) {
-			e.update(delta);
-		}
-	}
-
-	@Override
-	protected void worldPaint(float alpha) {
-		for(Entity e: entities) {
-			e.paint(alpha);
-		}
-	}
 }
