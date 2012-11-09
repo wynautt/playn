@@ -75,6 +75,10 @@ public class Natal implements Game {
 		world.addEntity(new Present(world, 13.0f, 0.0f, 0.0f));
 		world.addEntity(new Present(world, 14.0f, 0.0f, 0.0f));
 		
+		world.addEntity(new RandomCloud(world, 0.0f, 0.0f, 0.0f));
+		
+		world.addEntity(new DynamicClould(world, 10.f, 10.0f, 0.0f));
+		
 		pointer().setListener(new Pointer.Adapter(){
 
 			@Override

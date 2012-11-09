@@ -77,12 +77,12 @@ public class Chimney extends NatalEntity implements PhysicsEntity.HasContactList
 	}
 
 	@Override
-	float getWidth() {
+	public float getWidth() {
 		return 2.0f;
 	}
 
 	@Override
-	float getHeight() {
+	public float getHeight() {
 		return 6.0f;
 	}
 

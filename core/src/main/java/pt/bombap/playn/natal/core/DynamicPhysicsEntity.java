@@ -48,9 +48,9 @@ public abstract class DynamicPhysicsEntity extends Entity implements PhysicsEnti
 	public void update(float delta) {
 		// store state for interpolation in paint()
 		super.update(delta);
-		prevX = body.getPosition().x;
-		prevY = body.getPosition().y;
-		prevA = body.getAngle();
+		x = prevX = body.getPosition().x;
+		y = prevY = body.getPosition().y;
+		angle = prevA = body.getAngle();
 	}
 
 	

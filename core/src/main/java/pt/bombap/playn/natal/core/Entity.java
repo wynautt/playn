@@ -9,6 +9,11 @@ import playn.core.ResourceCallback;
 
 public abstract class Entity {
 	final View view;
+	/**
+	 * entity properties may not represent entity view position on screen all the times
+	 * you can use these properties to do calculations over the position of the entity 
+	 * but if you want the entity to reflect these positions on the screen you must call setPos(x, y) and setRotation(angle) 
+	 */
 	float x, y, angle;
 
 	public Entity(final GameWorld gameWorld, float px, float py, float pangle) {
@@ -58,10 +63,13 @@ public abstract class Entity {
 	}
 
 	public void setPos(float x, float y) {
+		this.x = x;
+		this.y = y;
 		view.setTranslation(x, y);
 	}
 
 	public void setAngle(float a) {
+		this.angle = a;
 		view.setRotation(a);
 	}
 
@@ -69,17 +77,18 @@ public abstract class Entity {
 	 * 
 	 * @return Entity width in world coordinates.
 	 */
-	abstract float getWidth();
+	public abstract float getWidth();
 
 	/**
 	 * 
 	 * @return Entity height in world coordinates
 	 */
-	abstract float getHeight();
+	public abstract float getHeight();
 
 	public View getView() {
 		return view;
 	}
+	
 	
 	protected abstract View createView();
 	protected abstract void destroy(GameWorld gameWorld);
