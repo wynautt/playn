@@ -32,6 +32,12 @@
       <artifactId>playn-html</artifactId>
       <version>${playn.version}</version>
     </dependency>
+    
+    <dependency>
+      <groupId>com.allen-sauer.gwt.log</groupId>
+      <artifactId>gwt-log</artifactId>
+      <version>3.1.6</version>
+    </dependency>
 
     <!-- Start Google App Engine dependencies -->
     <!-- These can be removed if you don't wish to deploy to Google App Engine -->
@@ -68,6 +74,10 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
+        <!-- we need class metadata, override PlayN's disabling of such -->
+        <configuration>
+          <disableClassMetadata>false</disableClassMetadata>
+        </configuration>
         <executions>
           <execution>
             <phase>prepare-package</phase>

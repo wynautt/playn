@@ -1,7 +1,5 @@
 package pt.bombap.playn.natal.core;
 
-import playn.core.Image;
-import playn.core.ImageLayer;
 import pt.bombap.playn.extensions.sprites.Sprite;
 
 public class ChimneyView extends ObjectView {

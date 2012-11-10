@@ -25,6 +25,13 @@
       <artifactId>playn-jbox2d</artifactId>
       <version>${playn.version}</version>
     </dependency>
+    
+     <dependency>
+      <groupId>com.threerings</groupId>
+      <artifactId>tripleplay</artifactId>
+      <version>1.3</version>
+      <!-- <version>${playn.version}</version> -->
+    </dependency>
   </dependencies>
 
   <build>

@@ -1,5 +1,14 @@
 <module rename-to='natal'>
   <inherits name='playn.PlayN'/>
+  <!-- for box2d -->
+  <inherits name="org.jbox2d.GwtBox2D" />
+   <!-- for the menu UI -->
+  <inherits name='tripleplay.TriplePlay'/>
+  <!-- for enhanced logging -->
+  <inherits name="playn.logging.Enhanced" />
+  
+  
+  <inherits name="pt.bombap.playn.extensions.Extensions" />
 
   <source path='core'/>
   <source path='html'/>

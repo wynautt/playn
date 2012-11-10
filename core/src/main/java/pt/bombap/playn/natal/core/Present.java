@@ -15,6 +15,7 @@ public class Present extends NatalDynamicEntity {
 
 	public Present(GameWorld gameWorld, float x, float y, float angle) {
 		super(gameWorld, x, y, angle);
+		//autoDestroyWhenOutOfWorld = true;
 	}
 
 	@Override

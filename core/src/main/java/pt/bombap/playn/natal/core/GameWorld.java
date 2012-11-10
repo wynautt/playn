@@ -1,9 +1,10 @@
 package pt.bombap.playn.natal.core;
 
-import static playn.core.PlayN.graphics;
+import static playn.core.PlayN.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
@@ -21,6 +22,7 @@ import org.jbox2d.dynamics.contacts.Contact;
 import playn.core.CanvasImage;
 import playn.core.DebugDrawBox2D;
 import playn.core.GroupLayer;
+import playn.core.PlayN;
 
 /**
  * default axis orientation
@@ -40,6 +42,8 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 	protected GroupLayer worldLayer;
 
 	protected List<Entity> entities = new ArrayList<Entity>(10);
+	protected List<Entity> dirtyEntities = new ArrayList<Entity>(5);
+	
 	protected HashMap<Body, PhysicsEntity> bodyEntityTable = new HashMap<Body, PhysicsEntity>();
 	protected Stack<Contact> contacts = new Stack<Contact>();
 
@@ -60,8 +64,28 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 	// box2d object containing physics world
 	protected World world;
 
+	private OutOfWorldEntityFilter outOfWorldEntityFilter = new OutOfWorldEntityFilter();
 
 	private DebugDrawBox2D debugDraw;
+
+	public class OutOfWorldEntityFilter implements EntityFilter {
+
+		@Override
+		public boolean isOk(Entity entity) {
+			float x = entity.getView().getLayer().transform().tx();
+			
+			if(x > getWorldWidth() + entity.getWidth() / 2f) return true;
+			if(x < -entity.getWidth() / 2f) return true;
+
+			float y = entity.getView().getLayer().transform().ty();
+			
+			if(y > getWorldHeight() + entity.getHeight() / 2f) return true;
+			if(y < -entity.getHeight() / 2f) return true;
+
+			return false;
+		}
+
+	}
 
 	public static int normalizeWidth(int width) {
 		float ratio = (float)graphics().width() / graphics().height();
@@ -133,6 +157,10 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 		for(Entity e: entities) {
 			e.update(delta);
 		}
+		for(Entity e: dirtyEntities) {
+			removeEntity(e);
+		}
+		dirtyEntities.clear();
 	}
 
 	public void postStepUpdate(float delta) {
@@ -228,8 +256,61 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 			bodyEntityTable.remove(physicsEntity.getBody());
 		}
 	}
+	
+	public void markEntityDirty(Entity entity) {
+		dirtyEntities.add(entity);
+	}
 
+	/**
+	 * 
+	 * @param filter
+	 * @return null if no entity is valid according to the filter. A list of entities otherwise.
+	 */
+	public List<Entity> getEntities(EntityFilter filter) {
+		List<Entity> result = null;
+		for(Entity e: entities) {
+			if(filter.isOk(e)) {
+				if(result == null) {
+					result = new ArrayList<Entity>(1);
+				}
+				result.add(e);
+			}
+		}
 
+		return result;
+	}
+
+	public void destroyEntities(EntityFilter filter) {
+		List<Entity> toRemove = null;
+
+		for(Entity e: entities) {
+			if(filter.isOk(e)) {
+				if(toRemove == null) {
+					toRemove = new ArrayList<Entity>(1);
+				}
+				toRemove.add(e);				
+			}
+		}
+
+		if(toRemove != null) {
+			for(Entity e: toRemove) {
+				log().debug("out: " + e);
+				removeEntity(e);
+				e.destroy(this);
+			}
+		}
+
+	}
+
+	public void destroyOutOfWorldEntities() {
+		destroyEntities(outOfWorldEntityFilter);
+	}
+
+	public void destroyOutOfWorldEntities(EntityFilter filter) {
+		destroyEntities(new AndEntityFilter(filter, outOfWorldEntityFilter));
+	}
+
+	
 	// handle contacts out of physics loop
 	public void processContacts() {
 		while (!contacts.isEmpty()) {

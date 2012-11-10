@@ -2,6 +2,7 @@ package pt.bombap.playn.natal.core;
 
 import static playn.core.PlayN.assets;
 import static playn.core.PlayN.graphics;
+import static playn.core.PlayN.log;
 import playn.core.Image;
 import playn.core.ImageLayer;
 import playn.core.PlayN;
@@ -15,8 +16,16 @@ public abstract class Entity {
 	 * but if you want the entity to reflect these positions on the screen you must call setPos(x, y) and setRotation(angle) 
 	 */
 	float x, y, angle;
+	
+	/**
+	 * here for future use
+	 */
+	protected boolean dirty = false;
+	protected boolean autoDestroyWhenOutOfWorld = false;
+	protected GameWorld world;
 
 	public Entity(final GameWorld gameWorld, float px, float py, float pangle) {
+		this.world = gameWorld;
 		this.x = px;
 		this.y = py;
 		this.angle = pangle;
@@ -60,6 +69,9 @@ public abstract class Entity {
 
 	public void update(float delta) {
 		view.update(delta);
+		if(autoDestroyWhenOutOfWorld) {
+			destroyWhenOutOfWorld();
+		}
 	}
 
 	public void setPos(float x, float y) {
@@ -67,6 +79,7 @@ public abstract class Entity {
 		this.y = y;
 		view.setTranslation(x, y);
 	}
+	
 
 	public void setAngle(float a) {
 		this.angle = a;
@@ -89,6 +102,32 @@ public abstract class Entity {
 		return view;
 	}
 	
+	protected boolean isOutOfWorld() {
+		float x = getView().getLayer().transform().tx();
+		
+		if(x > world.getWorldWidth() + getWidth() / 2f) return true;
+		if(x < -getWidth() / 2f) return true;
+
+		float y = getView().getLayer().transform().ty();
+		
+		if(y > world.getWorldHeight() + getHeight() / 2f) return true;
+		if(y < -getHeight() / 2f) return true;
+
+		return false;
+	}
+	
+	protected void destroyWhenOutOfWorld() {
+		if(isOutOfWorld()) {
+			dirty = true;
+			world.markEntityDirty(this);
+			destroy(world);
+			log().debug("out: " + this);
+		}
+	}
+	
+	public boolean isDirty() {
+		return dirty;
+	}
 	
 	protected abstract View createView();
 	protected abstract void destroy(GameWorld gameWorld);
