@@ -23,16 +23,40 @@ public abstract class DynamicPhysicsEntity extends Entity implements PhysicsEnti
 	// for calculating interpolation
 	private float prevX, prevY, prevA;
 	private Body body;
+	
+	public DynamicPhysicsEntity(GameWorld gameWorld, float width, float height,	float px, float py, float pangle) {
+		super(gameWorld, width, height, px, py, pangle);
+		body = initPhysicsBody(gameWorld.getWorld(), x, y, angle);
+		setPos(x, y);
+		setAngle(angle);
+		
+		if(hasLoaded) {
+			gameWorld.addEntity(this);
+		}
+	}
 
 	public DynamicPhysicsEntity(GameWorld gameWorld, float x, float y, float angle) {
 		super(gameWorld, x, y, angle);
 		body = initPhysicsBody(gameWorld.getWorld(), x, y, angle);
 		setPos(x, y);
 		setAngle(angle);
+		
+		if(hasLoaded) {
+			gameWorld.addEntity(this);
+		}
 	}
 
 	protected abstract Body initPhysicsBody(World world, float x, float y, float angle);
 
+	@Override
+	public void initPostLoad(GameWorld gameWorld) {
+		if(body != null) {
+			gameWorld.addEntity(this);
+		} else {
+			hasLoaded = true;
+		}
+	}
+	
 	@Override
 	public void paint(float alpha) {
 		// interpolate based on previous state
@@ -69,12 +93,26 @@ public abstract class DynamicPhysicsEntity extends Entity implements PhysicsEnti
 		prevX = x;
 		prevY = y;
 	}
-
+	
+	public Vec2 getLinearVelocity() {
+		return body.getLinearVelocity();
+	}
+	
+	public float getAngularVelocity() {
+		return body.getAngularVelocity();
+	}
+	
 	@Override
 	public void setAngle(float a) {
 		super.setAngle(a);
 		getBody().setTransform(getBody().getPosition(), a);
 		prevA = a;
+	}
+	
+	@Override
+	protected void destroy(GameWorld gameWorld) {
+		world.getWorld().destroyBody(getBody());
+		world.markEntityDirty(this);
 	}
 
 	@Override

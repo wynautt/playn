@@ -36,14 +36,14 @@ import playn.core.PlayN;
  *
  */
 public abstract class GameWorld implements IGameWorld, ContactListener {
-	private static boolean showDebugDraw = true;
+	private static boolean showDebugDraw = false;
 
 	// main layer that holds the world. note: this gets scaled to world space
 	protected GroupLayer worldLayer;
 
 	protected List<Entity> entities = new ArrayList<Entity>(10);
 	protected List<Entity> dirtyEntities = new ArrayList<Entity>(5);
-	
+
 	protected HashMap<Body, PhysicsEntity> bodyEntityTable = new HashMap<Body, PhysicsEntity>();
 	protected Stack<Contact> contacts = new Stack<Contact>();
 
@@ -68,17 +68,17 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 
 	private DebugDrawBox2D debugDraw;
 
-	public class OutOfWorldEntityFilter implements EntityFilter {
+	public class OutOfWorldEntityFilter implements Filter<Entity> {
 
 		@Override
 		public boolean isOk(Entity entity) {
 			float x = entity.getView().getLayer().transform().tx();
-			
+
 			if(x > getWorldWidth() + entity.getWidth() / 2f) return true;
 			if(x < -entity.getWidth() / 2f) return true;
 
 			float y = entity.getView().getLayer().transform().ty();
-			
+
 			if(y > getWorldHeight() + entity.getHeight() / 2f) return true;
 			if(y < -entity.getHeight() / 2f) return true;
 
@@ -136,6 +136,10 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 		}
 
 	}
+	
+	public static void showDebug(boolean show) {
+		showDebugDraw = show;
+	}
 
 	public void update(float delta) {
 		preStepUpdate(delta);
@@ -143,6 +147,7 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 		// the step delta is fixed so box2d isn't affected by framerate
 		world.step(dt, velocityIterations, positionIterations);
 		postStepUpdate(delta);
+		log().debug("Number of entities: " + entities.size());
 	}
 
 	public void paint(float delta) {
@@ -157,14 +162,14 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 		for(Entity e: entities) {
 			e.update(delta);
 		}
-		for(Entity e: dirtyEntities) {
-			removeEntity(e);
-		}
-		dirtyEntities.clear();
 	}
 
 	public void postStepUpdate(float delta) {
 		processContacts();
+		for(Entity e: dirtyEntities) {
+			removeEntity(e);
+		}
+		dirtyEntities.clear();
 	}
 
 	public void worldPaint(float alpha) {
@@ -248,7 +253,7 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 			bodyEntityTable.put(physicsEntity.getBody(), physicsEntity);
 		}
 	}
-	
+
 	public void removeEntity(Entity entity) {
 		entities.remove(entity);
 		if (entity instanceof PhysicsEntity) {
@@ -256,7 +261,7 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 			bodyEntityTable.remove(physicsEntity.getBody());
 		}
 	}
-	
+
 	public void markEntityDirty(Entity entity) {
 		dirtyEntities.add(entity);
 	}
@@ -266,7 +271,7 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 	 * @param filter
 	 * @return null if no entity is valid according to the filter. A list of entities otherwise.
 	 */
-	public List<Entity> getEntities(EntityFilter filter) {
+	public List<Entity> getEntities(Filter<? super Entity> filter) {
 		List<Entity> result = null;
 		for(Entity e: entities) {
 			if(filter.isOk(e)) {
@@ -280,7 +285,65 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 		return result;
 	}
 
-	public void destroyEntities(EntityFilter filter) {
+	public <T> List<T> map(Function<T, ? super Entity> function) {
+		List<T> result = new ArrayList<T>(entities.size());
+
+		for(Entity e: entities) {
+			result.add(function.apply(e));
+		}
+
+		return result;
+	}
+
+	public <T> List<T> map(Filter<? super Entity> filter, Function<T, ? super Entity> function) {
+		List<T> result = new ArrayList<T>(0);
+
+		for(Entity e: entities) {
+			if(filter.isOk(e)) {
+				result.add(function.apply(e));
+			}
+		}
+
+		return result;
+	}
+
+	public <T> T apply(Function2D<T, ? super Entity> function) {
+		T parcialResult = null;
+
+		for(Entity e: entities) {
+			parcialResult = function.apply(parcialResult, e); 
+		}
+
+		return parcialResult;
+	}
+
+	public <T> T apply(Filter<? super Entity> filter, Function2D<T, ? super Entity> function) {
+		T parcialResult = null;
+
+		for(Entity e: entities) {
+			if(filter.isOk(e)) {
+				parcialResult = function.apply(parcialResult, e);
+			}
+		}
+
+		return parcialResult;
+	}
+	
+	public void apply(Procedure<? super Entity> fn) {
+		for(Entity e: entities) {
+			fn.apply(e); 
+		}
+	}
+
+	public void apply(Filter<? super Entity> filter, Procedure<? super Entity> fn) {
+		for(Entity e: entities) {
+			if(filter.isOk(e)) {
+				fn.apply(e);
+			}
+		}
+	}
+
+	public void destroyEntities(Filter<? super Entity> filter) {
 		List<Entity> toRemove = null;
 
 		for(Entity e: entities) {
@@ -306,11 +369,11 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 		destroyEntities(outOfWorldEntityFilter);
 	}
 
-	public void destroyOutOfWorldEntities(EntityFilter filter) {
-		destroyEntities(new AndEntityFilter(filter, outOfWorldEntityFilter));
+	public void destroyOutOfWorldEntities(Filter<Entity> filter) {
+		destroyEntities(new AndFilter<Entity>(filter, outOfWorldEntityFilter));
 	}
 
-	
+
 	// handle contacts out of physics loop
 	public void processContacts() {
 		while (!contacts.isEmpty()) {

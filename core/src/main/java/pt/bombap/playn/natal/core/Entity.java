@@ -1,33 +1,37 @@
 package pt.bombap.playn.natal.core;
 
-import static playn.core.PlayN.assets;
-import static playn.core.PlayN.graphics;
 import static playn.core.PlayN.log;
-import playn.core.Image;
-import playn.core.ImageLayer;
 import playn.core.PlayN;
 import playn.core.ResourceCallback;
 
 public abstract class Entity {
-	final View view;
+	protected final View view;
 	/**
 	 * entity properties may not represent entity view position on screen all the times
 	 * you can use these properties to do calculations over the position of the entity 
 	 * but if you want the entity to reflect these positions on the screen you must call setPos(x, y) and setRotation(angle) 
 	 */
-	float x, y, angle;
-	
+	protected float x, y, angle;
+	protected final float width, height;
+
 	/**
 	 * here for future use
 	 */
 	protected boolean dirty = false;
 	protected boolean autoDestroyWhenOutOfWorld = false;
-	protected GameWorld world;
+	protected final GameWorld world;
+	
+	/**
+	 * hack to add this entity to the world only when his body is constructed (applies only to physics entities)
+	 */
+	protected boolean hasLoaded = false;
 
-	public Entity(final GameWorld gameWorld, float px, float py, float pangle) {
+	public Entity(final GameWorld gameWorld, final float width, float height, float px, float py, float pangle) {
 		this.world = gameWorld;
 		this.x = px;
 		this.y = py;
+		this.width = width;
+		this.height = height;
 		this.angle = pangle;
 		view = createView();
 		initPreLoad(gameWorld);
@@ -49,19 +53,26 @@ public abstract class Entity {
 		});
 	}
 
+	public Entity(final GameWorld gameWorld, float px, float py, float pangle) {
+		this(gameWorld, 0f, 0f, px, py, pangle);
+	}
+
 	/**
-	 * Perform pre-image load initialization (e.g., attaching to PeaWorld layers).
+	 * Perform pre-image load initialization (e.g., attaching to World layers).
 	 *
-	 * @param peaWorld
+	 * @param GameWorld
 	 */
 	public abstract void initPreLoad(final GameWorld gameWorld);
 
 	/**
-	 * Perform post-image load initialization (e.g., attaching to PeaWorld layers).
+	 * Perform post-image load initialization (e.g., attaching to World layers).
 	 *
-	 * @param peaWorld
+	 * @param GameWorld
 	 */
-	public abstract void initPostLoad(final GameWorld gameWorld);
+
+	public void initPostLoad(final GameWorld gameWorld) {
+		gameWorld.addEntity(this);
+	}
 
 	public void paint(float alpha) {
 		view.paint(alpha);
@@ -79,44 +90,60 @@ public abstract class Entity {
 		this.y = y;
 		view.setTranslation(x, y);
 	}
-	
+
 
 	public void setAngle(float a) {
 		this.angle = a;
 		view.setRotation(a);
 	}
 
+	public float getX() {
+		return x;
+	}
+
+	public float getY() {
+		return y;
+	}
+
+	public float getAngle() {
+		return angle;
+	}
+
 	/**
 	 * 
 	 * @return Entity width in world coordinates.
 	 */
-	public abstract float getWidth();
+	public float getWidth() {
+		return width;
+	}
 
 	/**
 	 * 
 	 * @return Entity height in world coordinates
 	 */
-	public abstract float getHeight();
+	public float getHeight() {
+		return height;
+	}
 
 	public View getView() {
 		return view;
 	}
-	
+
 	protected boolean isOutOfWorld() {
 		float x = getView().getLayer().transform().tx();
-		
+
 		if(x > world.getWorldWidth() + getWidth() / 2f) return true;
 		if(x < -getWidth() / 2f) return true;
 
 		float y = getView().getLayer().transform().ty();
-		
+
 		if(y > world.getWorldHeight() + getHeight() / 2f) return true;
 		if(y < -getHeight() / 2f) return true;
 
 		return false;
 	}
-	
-	protected void destroyWhenOutOfWorld() {
+
+	private void destroyWhenOutOfWorld() {
 		if(isOutOfWorld()) {
 			dirty = true;
 			world.markEntityDirty(this);
@@ -124,11 +151,11 @@ public abstract class Entity {
 			log().debug("out: " + this);
 		}
 	}
-	
+
 	public boolean isDirty() {
 		return dirty;
 	}
-	
+
 	protected abstract View createView();
 	protected abstract void destroy(GameWorld gameWorld);
 

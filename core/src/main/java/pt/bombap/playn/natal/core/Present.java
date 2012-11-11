@@ -7,7 +7,6 @@ import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.FixtureDef;
 import org.jbox2d.dynamics.World;
-import static playn.core.PlayN.random;;
 
 
 public class Present extends NatalDynamicEntity {
@@ -15,7 +14,7 @@ public class Present extends NatalDynamicEntity {
 
 	public Present(GameWorld gameWorld, float x, float y, float angle) {
 		super(gameWorld, x, y, angle);
-		//autoDestroyWhenOutOfWorld = true;
+		autoDestroyWhenOutOfWorld = true;
 	}
 
 	@Override

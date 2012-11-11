@@ -1,9 +1,12 @@
 package pt.bombap.playn.natal.core;
 
-import org.jbox2d.dynamics.Body;
-import org.jbox2d.dynamics.World;
 
-public abstract class NatalEntity extends StaticPhysicsEntity {
+public abstract class NatalEntity extends StaticPhysicsEntity {	
+	
+	public NatalEntity(GameWorld gameWorld, float width, float height, float px, float py, float pangle) {
+		super(gameWorld, width, height, px, py, pangle);
+	}
+
 
 	public NatalEntity(GameWorld gameWorld, float x, float y, float angle) {
 		super(gameWorld, x, y, angle);
@@ -16,12 +19,10 @@ public abstract class NatalEntity extends StaticPhysicsEntity {
 		natalWorld.getStaticLayerFront().add(getView().getLayer());
 	}
 
-	@Override
-	public void initPostLoad(GameWorld gameWorld) {
-	}
 
 	@Override
 	protected void destroy(GameWorld gameWorld) {
+		super.destroy(gameWorld);
 		((NatalWorld)gameWorld).getStaticLayerFront().remove(getView().getLayer());
 	}
 	

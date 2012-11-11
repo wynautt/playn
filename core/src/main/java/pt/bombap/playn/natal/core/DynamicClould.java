@@ -1,22 +1,34 @@
 package pt.bombap.playn.natal.core;
 
-import org.jbox2d.collision.shapes.CircleShape;
+import static playn.core.PlayN.random;
+
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.BodyType;
-import org.jbox2d.dynamics.Filter;
 import org.jbox2d.dynamics.FixtureDef;
 import org.jbox2d.dynamics.World;
 
 public class DynamicClould extends NatalDynamicEntity {
 	private NatalWorld world;
 	
+	private float travelledDistance = 0.0f;
+	private float prevX = 0.0f;
+	
 	public DynamicClould(GameWorld gameWorld, float x, float y, float angle) {
 		super(gameWorld, x, y, angle);
 		world = (NatalWorld) gameWorld;
-		setLinearVelocity(5.0f, 0.0f);
+		setPos(prevX = getRandomX(), getRandomY());
+		setLinearVelocity(0.0f, 0.0f);
+	}
+
+	private float getRandomX() {
+		return random() * world.getWorldWidth();
+	}
+
+	private float getRandomY() {
+		return random() * (world.getWorldHeight() / 4.0f);
 	}
 
 	@Override
@@ -59,13 +71,24 @@ public class DynamicClould extends NatalDynamicEntity {
 		return new ImageView("sprites/Cloud1.png");
 	}
 	
+	public float getTravelledDistance() {
+		return travelledDistance;
+	}
+	
 	@Override
 	public void update(float delta) {
 		super.update(delta);
+			
 		
-		if(x > getWidth() / 2f + world.getWorldWidth()) {
-			setPos(-getWidth() / 2f, y);
+		travelledDistance += Math.abs(prevX - x);
+			
+		if(x < -getWidth() / 2f) {
+			setPos(world.getWorldWidth() + getWidth() / 2f, getRandomY());
+		} else if(x > world.getWorldWidth() + getWidth() / 2f) {
+			setPos(-getWidth() / 2f, getRandomY());
 		}
+		
+		prevX = x;
 	}
 
 }

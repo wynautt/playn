@@ -18,6 +18,7 @@ import playn.core.DebugDrawBox2D;
 import playn.core.GroupLayer;
 
 public class NatalWorld extends GameWorld {
+		
 	public static int worldWidth = 32;
 	public static int worldHeight = 24;
 	//public static float physUnitPerScreenUnit = 1 / 26.666667f;

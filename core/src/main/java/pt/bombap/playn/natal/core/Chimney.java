@@ -16,13 +16,15 @@ public class Chimney extends NatalDynamicEntity implements PhysicsEntity.HasCont
 	public static String TYPE = "Chimney";
 	private NatalWorld world;
 
-	public Chimney(final GameWorld gameWorld, float x, float y, float angle) {
-		super(gameWorld, x, y, angle);
+	
+	public Chimney(GameWorld gameWorld, float width, float height, float px, float py, float pangle) {
+		super(gameWorld, width, height, px, py, pangle);
 		world = (NatalWorld) gameWorld;
 		autoDestroyWhenOutOfWorld = true;
-		setLinearVelocity(-2.0f, 0.0f);
+		setLinearVelocity(0.0f, 0.0f);
 	}
 
+	
 	@Override
 	protected Body initPhysicsBody(World world, float x, float y, float angle) {
 		BodyDef bodyDef = new BodyDef();
@@ -67,15 +69,6 @@ public class Chimney extends NatalDynamicEntity implements PhysicsEntity.HasCont
 		return body;
 	}
 
-	@Override
-	public float getWidth() {
-		return 2.0f;
-	}
-
-	@Override
-	public float getHeight() {
-		return 6.0f;
-	}
 
 	/**
 	 * Return the size of the offset where the block is slightly lower than where
@@ -97,8 +90,8 @@ public class Chimney extends NatalDynamicEntity implements PhysicsEntity.HasCont
 		if(other instanceof Present) {
 			if("bottom".equals(myFixture.getUserData())) {
 				log().debug("Collision between chimney and present!");
-				world.getWorld().destroyBody(other.getBody());
-				world.removeEntity((Entity) other);
+				//world.getWorld().destroyBody(other.getBody());
+				//world.removeEntity((Entity) other);
 				//TODO: think about joining creation and adding to the world and destruction and removing from the world
 				((Present) other).destroy(world);
 			}
