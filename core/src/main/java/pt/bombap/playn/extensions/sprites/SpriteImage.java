@@ -34,6 +34,10 @@ class SpriteImage {
     this.width = width;
     this.height = height;
   }
+  
+  public SpriteImage clone() {
+	  return this;
+  }
 
   public Image image() {
     return image;

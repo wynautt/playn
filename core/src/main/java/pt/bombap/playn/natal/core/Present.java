@@ -50,13 +50,14 @@ public class Present extends NatalDynamicEntity {
 	}
 
 	float getRadius() {
-		//return 1.50f;
-		return 0.5f;
+		return 1.0f;
+		//return 0.5f;
 	}
 
 	@Override
 	public View createView() {
-		return new ImageView("sprites/pea.png");
+		//return new ImageView("sprites/pea.png");
+		return new SpriteView("sprites/sprites.json");
 	}
 
 }

@@ -15,13 +15,16 @@
  */
 package pt.bombap.playn.extensions.sprites;
 
+import static playn.core.PlayN.graphics;
 import static playn.core.PlayN.log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import playn.core.Asserts;
+import playn.core.Image;
 import playn.core.ImageLayer;
 import playn.core.ResourceCallback;
 
@@ -60,6 +63,25 @@ public class Sprite {
     spriteImages = new ArrayList<SpriteImage>(0);
     spriteIdMap = new HashMap<String, Integer>();
   }
+  
+  Sprite() {
+	  
+  }
+  
+  public Sprite clone() {
+	  final Image tempImage = graphics().createImage(1, 1);
+	  final Sprite clone = new Sprite();
+	
+	  clone.layer = graphics().createImageLayer(tempImage);
+	  clone.spriteIdMap = spriteIdMap;
+	  clone.spriteImages = spriteImages;
+	  
+	  clone.doneLoadingData();
+	  clone.doneLoadingImages();
+	  
+	  return clone;
+  }
+  
 
   /**
    * Set callback that will be called when both the sprite data and sprite image have been loaded.

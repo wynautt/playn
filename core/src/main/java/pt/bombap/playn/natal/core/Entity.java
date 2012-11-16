@@ -129,6 +129,7 @@ public abstract class Entity {
 		return view;
 	}
 
+	//TODO: fix bug with big objects: they disappear as soon as the lower aabb square hits the ground and as so objects are being removed when they still are on screen
 	protected boolean isOutOfWorld() {
 		float x = getView().getLayer().transform().tx();
 
