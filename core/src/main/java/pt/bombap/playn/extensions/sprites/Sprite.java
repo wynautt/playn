@@ -126,6 +126,15 @@ public class Sprite {
   public boolean isReady() {
     return imagesDone && dataDone;
   }
+  
+  public <T> void setSprite(T value) {
+	  if(value instanceof String) {
+		  setSprite((String) value);
+	  } else {
+		  int v = (Integer) value;
+		  setSprite(v);
+	  }
+  }
 
   /**
    * Set the current sprite via the index.

@@ -12,18 +12,16 @@ import org.jbox2d.dynamics.FixtureDef;
 import org.jbox2d.dynamics.World;
 import org.jbox2d.dynamics.contacts.Contact;
 
-public class Chimney extends NatalDynamicEntity implements PhysicsEntity.HasContactListener {
+public class StaticChimney extends NatalEntity implements PhysicsEntity.HasContactListener {
 	public static String TYPE = "Chimney";
 	private NatalWorld world;
-
 	
-	public Chimney(GameWorld gameWorld, float width, float height, float px, float py, float pangle) {
+	
+
+	public StaticChimney(GameWorld gameWorld, float width, float height, float px, float py, float pangle) {
 		super(gameWorld, width, height, px, py, pangle);
 		world = (NatalWorld) gameWorld;
-		autoDestroyWhenOutOfWorld = true;
-		setLinearVelocity(0.0f, 0.0f);
 	}
-
 	
 	@Override
 	protected Body initPhysicsBody(World world, float x, float y, float angle) {
@@ -69,16 +67,6 @@ public class Chimney extends NatalDynamicEntity implements PhysicsEntity.HasCont
 		return body;
 	}
 
-
-	/**
-	 * Return the size of the offset where the block is slightly lower than where
-	 * the image is drawn for a depth effect
-	 */
-	public float getTopOffset() {
-		return 2.0f / 8f;
-	}
-
-
 	@Override
 	public View createView() {
 		//return new ImageView("sprites/chimney1.jpg");
@@ -94,30 +82,11 @@ public class Chimney extends NatalDynamicEntity implements PhysicsEntity.HasCont
 				//world.getWorld().destroyBody(other.getBody());
 				//world.removeEntity((Entity) other);
 				//TODO: think about joining creation and adding to the world and destruction and removing from the world
+				stateListener.notify((Present) other, Code.PRESENT_DELIVERED);
 				((Present) other).destroy(world);
+				destroy(world);
 			}
 		}
 	}
-
-	public float getVelocity() {
-		return 0.002f;
-	}
-	
-	
-	@Override
-	public SpriteView getView() {
-		return (SpriteView)super.getView();
-	}
-	
-	public void changeChimney(String id) {
-		getView().changeSprite(id);
-	}
-
-//	@Override
-//	public void update(float delta) {
-//		super.update(delta);
-//		x -= getVelocity() * delta;
-//		setPos(x, y);
-//	}
 
 }

@@ -28,6 +28,7 @@ public class NatalWorld extends GameWorld {
 	private GroupLayer staticLayerBack;
 	private GroupLayer dynamicLayer;
 	private GroupLayer staticLayerFront;
+	private GroupLayer controlLayer;
 
 	public NatalWorld(int width) {
 		super(width);
@@ -46,6 +47,8 @@ public class NatalWorld extends GameWorld {
 		worldLayer.add(dynamicLayer);
 		staticLayerFront = graphics().createGroupLayer();
 		worldLayer.add(staticLayerFront);
+		controlLayer = graphics().createGroupLayer();
+		worldLayer.add(controlLayer);
 
 		// create the ground
 		Body ground = world.createBody(new BodyDef());
@@ -79,6 +82,10 @@ public class NatalWorld extends GameWorld {
 
 	public GroupLayer getStaticLayerFront() {
 		return staticLayerFront;
+	}
+	
+	public GroupLayer getControlLayer() {
+		return controlLayer;
 	}
 
 

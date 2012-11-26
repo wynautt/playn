@@ -4,6 +4,18 @@ import static playn.core.PlayN.log;
 import playn.core.PlayN;
 import playn.core.ResourceCallback;
 
+/**
+ * We need a way to know what is the view that is being used for each entity.
+ * This way we can, for example, change the sprite of an entity rendered as a sprite view.
+ * I can see two way:
+ * 1. Review the bridge pattern as one way of linking an entity with its view;
+ * 2. Use only interfaces for both physics entities and view related entities (like a sprite view entity) and use factories to instantiate
+ * entities which will be brought to life with all the methods of all implemented interfaces.
+ * Either way as a result we should be able to create an entity aware of its view and the programmer should also be aware of it.
+ * 
+ * Take a loop at ios views and controllers.
+ *
+ */
 public abstract class Entity {
 	protected final View view;
 	/**
@@ -25,6 +37,8 @@ public abstract class Entity {
 	 * hack to add this entity to the world only when his body is constructed (applies only to physics entities)
 	 */
 	protected boolean hasLoaded = false;
+	
+	protected IStateListener<Entity> stateListener;
 
 	public Entity(final GameWorld gameWorld, final float width, float height, float px, float py, float pangle) {
 		this.world = gameWorld;
@@ -55,6 +69,19 @@ public abstract class Entity {
 
 	public Entity(final GameWorld gameWorld, float px, float py, float pangle) {
 		this(gameWorld, 0f, 0f, px, py, pangle);
+	}
+	
+	/**
+	 * TODO: Will replace the constructor's code.
+	 * Should be called after all initialization of internal state has been done.  
+	 * @return this entity
+	 */
+	public Entity init() {
+		return this;
+	}
+	
+	public void setStateListener(IStateListener<Entity> stateListener) {
+		this.stateListener = stateListener;
 	}
 
 	/**

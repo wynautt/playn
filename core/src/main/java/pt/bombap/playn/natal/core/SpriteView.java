@@ -74,6 +74,18 @@ public class SpriteView extends View {
 			//default
 		}
 	}
+	
+	public void changeSprite(int index) {
+		sprite.setSprite(index);
+	}
+	
+	public void changeSprite(String id) {
+		sprite.setSprite(id);
+	}
+	
+	public Sprite getSprite() {
+		return sprite;
+	}
 
 	public boolean isReady() {
 		return hasLoaded;

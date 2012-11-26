@@ -1,6 +1,8 @@
 {
-  "urls": ["sprites/chimney1.jpg"],
+  "urls": ["sprites/chimneys.png"],
   "sprites": [
-    {"id": "c1", "url": 0, "x": 0, "y": 0, "w": 90, "h": 135}
+    {"id": "0", "url": 0, "x": 0, "y": 0,   "w": 115, "h": 89},
+    {"id": "1", "url": 0, "x": 0, "y": 91, "w": 93, "h": 154},
+    {"id": "2", "url": 0, "x": 0, "y": 247, "w": 117, "h": 107}
   ]
 }

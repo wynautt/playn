@@ -147,7 +147,7 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 		// the step delta is fixed so box2d isn't affected by framerate
 		world.step(dt, velocityIterations, positionIterations);
 		postStepUpdate(delta);
-		log().debug("Number of entities: " + entities.size());
+		//log().debug("Number of entities: " + entities.size());
 	}
 
 	public void paint(float delta) {
