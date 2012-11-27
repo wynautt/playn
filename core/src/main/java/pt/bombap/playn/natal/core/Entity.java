@@ -1,6 +1,7 @@
 package pt.bombap.playn.natal.core;
 
 import static playn.core.PlayN.log;
+import playn.core.Game;
 import playn.core.PlayN;
 import playn.core.ResourceCallback;
 
@@ -52,11 +53,7 @@ public abstract class Entity {
 		view.addCallback(new ResourceCallback<View>() {
 			@Override
 			public void done(View view) {
-				// since the image is loaded, we can use its width and height
-				view.setOrigin(view.getWidth() / 2f, view.getHeight() / 2f);
-				view.setScale(getWidth() / view.getWidth(), getHeight() / view.getHeight());
-				view.setTranslation(x, y);
-				view.setRotation(angle);
+				viewLoaded(view, gameWorld);
 				initPostLoad(gameWorld);
 			}
 
@@ -78,6 +75,25 @@ public abstract class Entity {
 	 */
 	public Entity init() {
 		return this;
+	}
+	
+	/**
+	 * Gets the origin of a view.
+	 * 
+	 * @param view The view we want to get the origin from.
+	 * @return 2d array containing the x-coordinate in the first position and the y-coordinate in the second position.
+	 */
+	protected float[] getViewOrigin(View view) {
+		return new float[] {view.getWidth() / 2f, view.getHeight() / 2f};
+	}
+	
+	protected void viewLoaded(View view, GameWorld gameWorld) {
+		// since the image is loaded, we can use its width and height
+		float[] origin = getViewOrigin(view);
+		view.setOrigin(origin[0], origin[1]);
+		view.setScale(getWidth() / view.getWidth(), getHeight() / view.getHeight());
+		view.setTranslation(x, y);
+		view.setRotation(angle);
 	}
 	
 	public void setStateListener(IStateListener<Entity> stateListener) {

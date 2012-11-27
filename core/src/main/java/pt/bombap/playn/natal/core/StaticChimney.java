@@ -42,10 +42,10 @@ public class StaticChimney extends NatalEntity implements PhysicsEntity.HasConta
 		//		polygon[3] = new Vec2(getWidth()/2f, -getHeight()/2f);
 		//		polygonShape.set(polygon, polygon.length);
 
-		Vec2 tlv = new Vec2(-getWidth()/2f, -getHeight()/2f);
-		Vec2 blv = new Vec2(-getWidth()/2f, getHeight()/2f);
-		Vec2 trv = new Vec2(getWidth()/2f, -getHeight()/2f);
-		Vec2 brv = new Vec2(getWidth()/2f, getHeight()/2f);
+		Vec2 tlv = new Vec2(-getWidth()/2f, -getHeight());
+		Vec2 blv = new Vec2(-getWidth()/2f, 0f);
+		Vec2 trv = new Vec2(getWidth()/2f, -getHeight());
+		Vec2 brv = new Vec2(getWidth()/2f, 0f);
 
 		polygonShape.setAsEdge(tlv, blv);
 		fixtureDef.shape = polygonShape;
@@ -73,6 +73,10 @@ public class StaticChimney extends NatalEntity implements PhysicsEntity.HasConta
 		return new SpriteView("sprites/chimneys.json");
 	}
 
+	@Override
+	protected float[] getViewOrigin(View view) {
+		return new float[] {view.getWidth() / 2.0f, view.getHeight()};
+	}
 
 	@Override
 	public void contact(PhysicsEntity other, Fixture myFixture,	Fixture otherFixture, Contact contact) {

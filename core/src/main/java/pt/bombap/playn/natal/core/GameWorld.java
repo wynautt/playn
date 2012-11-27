@@ -36,7 +36,7 @@ import playn.core.PlayN;
  *
  */
 public abstract class GameWorld implements IGameWorld, ContactListener {
-	private static boolean showDebugDraw = false;
+	private static boolean showDebugDraw = true;
 
 	// main layer that holds the world. note: this gets scaled to world space
 	protected GroupLayer worldLayer;

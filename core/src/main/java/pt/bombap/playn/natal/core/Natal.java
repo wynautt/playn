@@ -34,9 +34,26 @@ import playn.core.Pointer.Event;
 import playn.core.Surface;
 import playn.core.SurfaceLayer;
 import pt.bombap.playn.extensions.sprites.SpriteAnimator;
+import react.UnitSlot;
+import tripleplay.ui.Background;
+import tripleplay.ui.Button;
+import tripleplay.ui.Group;
+import tripleplay.ui.Interface;
+import tripleplay.ui.Label;
+import tripleplay.ui.Root;
+import tripleplay.ui.SimpleStyles;
+import tripleplay.ui.Style;
+import tripleplay.ui.layout.AxisLayout;
 
 public class Natal implements Game {
-	public static final float INITIAL_VELOCITY = 2.5f;
+	public static final float MAX_VELOCITY = 20f;
+	public static final float MIN_VELOCITY = 2f;
+	public static final float MAX_METER_VELOCITY = 30f;
+	public static final float MIN_METER_VELOCITY = 0f;
+
+
+	public static final float INITIAL_VELOCITY = -2f;
+
 
 	private float screenWidth = 0.0f;
 	private float screenHeight = 0.0f;
@@ -45,6 +62,8 @@ public class Natal implements Game {
 	private NatalWorld world = null;
 	float ww = 0.0f;
 	float wh = 0.0f;
+	float wGroundTop = 0.0f;
+	float wGroundHeight = 0.0f;
 
 	private int travelledDistance = 0;
 	private int activeChimneys = 0;
@@ -52,6 +71,10 @@ public class Natal implements Game {
 
 	private float worldVelocity = -INITIAL_VELOCITY;
 	private float cloudVelocity = -INITIAL_VELOCITY;
+
+	private WindMeter windMeter;
+
+	private Menu startMenu;
 
 	private DynamicClould cloud;
 
@@ -124,6 +147,22 @@ public class Natal implements Game {
 		}
 	};
 
+	/**
+	 * world ground height
+	 * @return
+	 */
+	public float wgh(float decimal) {
+		return wGroundHeight * decimal + wGroundTop;
+	}
+
+	public float ww(float decimal) {
+		return ww * decimal;
+	}
+
+	public float windSpeedToMeterSpeed(float windSpeed) {
+		if(windSpeed < 0) windSpeed = -windSpeed;
+		return windSpeed * MAX_METER_VELOCITY / MAX_VELOCITY;
+	}
 
 	@Override
 	public void init() {
@@ -142,19 +181,24 @@ public class Natal implements Game {
 
 		graphics().rootLayer().add(bgLayer);
 
+		startMenu = new Menu();
+
 		world = new NatalWorld(GameWorld.normalizeWidth(24));
 		world.setDt(1.0f/40.0f);
 
 		ww = world.getWorldWidth();
 		wh = world.getWorldHeight();
-		
-		//wind meter radius
-		float wmr = 4.0f;
-		WindMeter windMeter = new WindMeter(world, wmr, wmr, ww - wmr / 2.0f, 0.0f + wmr / 2.0f, 0.0f);
-		windMeter.setValue(7.5f);
+
+		wGroundTop = wh * (2 / 3f);
+		wGroundHeight = wh - wGroundTop;
+
+		//wind meter diameter
+		float wmd = 4.0f;
+		windMeter = new WindMeter(world, wmd, wmd, ww - wmd / 2.0f, 0.0f + wmd / 2.0f, 0.0f);
+		windMeter.setValue(windSpeedToMeterSpeed(cloudVelocity));
 
 		levels = new ArrayList<Natal.Level>(100);
-		
+
 		levels.add(new Level() {
 
 			@Override
@@ -167,12 +211,12 @@ public class Natal implements Game {
 				StaticChimney c;
 				float w = 3f, h = 5f;
 
-				new StaticChimney(world, w, h, ww * (1 / 4f), 12.0f, 0.0f).setStateListener(stateListener);
-				new StaticChimney(world, w, h, ww * (1 / 2f), 12.0f, 0.0f).setStateListener(stateListener);
-				new StaticChimney(world, w, h, ww * (3 / 4f), 12.0f, 0.0f).setStateListener(stateListener);
+				new StaticChimney(world, w, h, ww * (1 / 4f), wh, 0.0f).setStateListener(stateListener);
+				new StaticChimney(world, w, h, ww * (1 / 2f), wh, 0.0f).setStateListener(stateListener);
+				new StaticChimney(world, w, h, ww * (3 / 4f), wh, 0.0f).setStateListener(stateListener);
 			}
 		});
-		
+
 		levels.add(new Level() {
 
 			@Override
@@ -184,16 +228,39 @@ public class Natal implements Game {
 			public void create() {
 				StaticChimney c;
 				float w = 3f, h = 5f;
-				
+
 				cloudVelocity *= -1.5;
 				cloud.setLinearVelocity(cloudVelocity, 0);
+				windMeter.setValue(windSpeedToMeterSpeed(cloudVelocity));
 
-				new StaticChimney(world, w, h, ww * (1 / 4f), 14.0f, 0.0f).setStateListener(stateListener);
-				new StaticChimney(world, w, h, ww * (1 / 2f), 10.0f, 0.0f).setStateListener(stateListener);
+				new StaticChimney(world, w, h, ww * (1 / 4f), wgh(0.25f), 0.0f).setStateListener(stateListener);
+				new StaticChimney(world, w, h, ww * (1 / 2f), wgh(0.5f), 0.0f).setStateListener(stateListener);
 			}
 		});
-		
-		
+
+		levels.add(new Level() {
+
+			@Override
+			public boolean isSuccess() {
+				return currentLevelDeliveredPresents == 2;
+			}
+
+			@Override
+			public void create() {
+				StaticChimney c;
+				float w = 3f, h = 5f;
+
+				cloudVelocity = 10;
+				cloud.setLinearVelocity(cloudVelocity, 0);
+				windMeter.setValue(windSpeedToMeterSpeed(cloudVelocity));
+
+				new StaticChimney(world, w, h, ww * (1 / 4f), wgh(0.25f), 0.0f).setStateListener(stateListener);
+				new StaticChimney(world, w, h, ww * (1 / 2f), wgh(0.5f), 0.0f).setStateListener(stateListener);
+			}
+		});
+
+
+
 		currentLevel = levels.remove(0);
 		currentLevel.create();
 		log().debug("New level: " + currentLevelNumber);
@@ -248,7 +315,9 @@ public class Natal implements Game {
 
 	@Override
 	public void paint(float alpha) {
-		world.paint(alpha);
+		if(!showingNextLevelMenu) {
+			world.paint(alpha);
+		}
 	}
 
 	Float chimneyWidth[] = {3f, 4f, 5f};
@@ -262,36 +331,93 @@ public class Natal implements Game {
 	int transitionDistance = 20;
 
 
+	public void startNextLevel() {
+		
+		pointer().setListener(new Pointer.Adapter(){
 
+			@Override
+			public void onPointerEnd(Event event) {
+				super.onPointerEnd(event);
+				Present present = new Present(world, world.getPhysUnitPerScreenUnit() * event.x(), world.getPhysUnitPerScreenUnit() * event.y(), 0.0f);
+				Vec2 currentV = present.getLinearVelocity();
+				present.setLinearVelocity(cloudVelocity, currentV.y);
+
+
+			}
+		});
+		
+		
+		currentLevel = levels.remove(0);
+		currentLevel.create();
+		currentLevelNumber++;
+		currentLevelDeliveredPresents = 0;
+		log().debug("New level: " + currentLevelNumber);
+		
+		showingNextLevelMenu = false;
+	}
+
+	boolean showingNextLevelMenu = false;
+	NextLevelMenu nextLevelMenu;
 
 	@Override
 	public void update(float delta) {
-		world.update(delta);
-//		if(cloud.getTravelledDistance() > transitionDistance) {
-//			cloudVelocity *= 1.2;
-//			worldVelocity = cloudVelocity;
-//			cloud.setLinearVelocity(cloudVelocity, 0);
-//			transitionDistance *= 2;
-//
-//		}
+		if(!showingNextLevelMenu) {
+			world.update(delta);
 
+			if(currentLevel.isSuccess()) {
+				currentLevel.destroy();
+				if(levels.isEmpty()) {
+					log().debug("Finish!!!");
+				} else {
+					pointer().setListener(null);
+					nextLevelMenu = new NextLevelMenu(world.getMenuLayer());
+					nextLevelMenu.init();
+					showingNextLevelMenu = true;
+					
+					
 
-		if(currentLevel.isSuccess()) {
-			currentLevel.destroy();
-			if(levels.isEmpty()) {
-				log().debug("Finish!!!");
-			} else {
-				currentLevel = levels.remove(0);
-				currentLevel.create();
-				currentLevelNumber++;
-				currentLevelDeliveredPresents = 0;
-				log().debug("New level: " + currentLevelNumber);
+				}
 			}
+		}
+	}
+
+	public class NextLevelMenu {
+
+		private GroupLayer nextLevelLayer;
+
+
+		public NextLevelMenu(GroupLayer menuLayer) {
+			nextLevelLayer = graphics().createGroupLayer();
+			menuLayer.add(nextLevelLayer);
 		}
 
 
+		public void init() {
+			ImageView view = new ImageView("images/next.png");
+			view.setOrigin(view.getWidth() / 2f, view.getHeight() / 2f);
+			view.setScale(3f / view.getWidth(), 3f / view.getHeight());
+			view.setTranslation(ww /2f, wh /2f);
+			view.setRotation(0f);
+			nextLevelLayer.add(view.getLayer());
+			
+			view.getLayer().addListener(new Pointer.Listener() {
 
+				@Override
+				public void onPointerStart(Event event) {
+					
+				}
 
+				@Override
+				public void onPointerEnd(Event event) {
+					nextLevelLayer.destroy();
+					startNextLevel();
+				}
+
+				@Override
+				public void onPointerDrag(Event event) {
+				}
+			});
+		}
 
 	}
 
