@@ -16,10 +16,80 @@ public class StaticChimney extends NatalEntity implements PhysicsEntity.HasConta
 	public static String TYPE = "Chimney";
 	private NatalWorld world;
 	
+	public static class Simple extends StaticChimney {
+		public Simple(GameWorld gameWorld, float px, float py, float pangle) {
+			super(gameWorld, px, py, pangle);
+		}
+		
+		@Override
+		public float getWidth() {
+			return 5.75f;
+		}
+		
+		@Override
+		public float getHeight() {
+			return 5.15f;
+		}
+		
+		@Override
+		public View createView() {
+			SpriteView view = (SpriteView) super.createView();
+			view.changeSprite("simple");
+			return view;
+		}
+	}
+	
+	public static class SimpleTall extends Simple {
+		public SimpleTall(GameWorld gameWorld, float px, float py, float pangle) {
+			super(gameWorld, px, py, pangle);
+			((SpriteView)getView()).changeSprite("simple_tall");
+		}
+		
+		@Override
+		public float getWidth() {
+			return 5.35f;
+		}
+		
+		@Override
+		public float getHeight() {
+			return 7.95f;
+		}
+		
+		@Override
+		public View createView() {
+			SpriteView view = (SpriteView) super.createView();
+			view.changeSprite("simple_tall");
+			return view;
+		}
+	}
+	
+	public static class SimpleFat extends Simple {
+		public SimpleFat(GameWorld gameWorld, float px, float py, float pangle) {
+			super(gameWorld, px, py, pangle);
+			((SpriteView)getView()).changeSprite("simple_fat");
+		}
+		
+		@Override
+		public float getWidth() {
+			return 5.35f;
+		}
+		
+		@Override
+		public float getHeight() {
+			return 4.35f;
+		}
+		
+		@Override
+		public View createView() {
+			SpriteView view = (SpriteView) super.createView();
+			view.changeSprite("simple_fat");
+			return view;
+		}
+	}
 	
 
-	public StaticChimney(GameWorld gameWorld, float width, float height, float px, float py, float pangle) {
-		super(gameWorld, width, height, px, py, pangle);
+	public StaticChimney(GameWorld gameWorld, float px, float py, float pangle) {
+		super(gameWorld, px, py, pangle);
 		world = (NatalWorld) gameWorld;
 	}
 	
@@ -42,11 +112,25 @@ public class StaticChimney extends NatalEntity implements PhysicsEntity.HasConta
 		//		polygon[3] = new Vec2(getWidth()/2f, -getHeight()/2f);
 		//		polygonShape.set(polygon, polygon.length);
 
-		Vec2 tlv = new Vec2(-getWidth()/2f, -getHeight());
-		Vec2 blv = new Vec2(-getWidth()/2f, 0f);
-		Vec2 trv = new Vec2(getWidth()/2f, -getHeight());
-		Vec2 brv = new Vec2(getWidth()/2f, 0f);
+		float w = getWidth() * (7/10f) / 2f;
+		float h = getHeight() * (14.5f/20f);
+		
+		Vec2 tlv = new Vec2(-w, -h);
+		Vec2 blv = new Vec2(-w, 0f);
+		Vec2 trv = new Vec2(w, -h);
+		Vec2 brv = new Vec2(w, 0f);
+		Vec2 collisionSurfaceL = new Vec2(-w/2f, -1);
+		Vec2 collisionSurfaceR = new Vec2(w/2f, -1);
 
+		float tw = getWidth() * (8/10f) /2f;
+		float th = getHeight() * (9/10f) ;
+		
+		Vec2 toptlv = new Vec2(-tw, -th);
+		Vec2 topblv = new Vec2(-tw, -h);
+		Vec2 toptrv = new Vec2(tw, -th);
+		Vec2 topbrv = new Vec2(tw, -h);
+		
+		
 		polygonShape.setAsEdge(tlv, blv);
 		fixtureDef.shape = polygonShape;
 		fixtureDef.userData = "left";
@@ -54,12 +138,27 @@ public class StaticChimney extends NatalEntity implements PhysicsEntity.HasConta
 
 		polygonShape.setAsEdge(blv, brv);
 		fixtureDef.shape = polygonShape;
+		fixtureDef.userData = "bottom1";
+		body.createFixture(fixtureDef);
+		
+		polygonShape.setAsEdge(collisionSurfaceL, collisionSurfaceR);
+		fixtureDef.shape = polygonShape;
 		fixtureDef.userData = "bottom";
 		body.createFixture(fixtureDef);
 
 		polygonShape.setAsEdge(trv, brv);
 		fixtureDef.shape = polygonShape;
 		fixtureDef.userData = "right";
+		body.createFixture(fixtureDef);
+		
+		polygonShape.setAsEdge(toptlv, topblv);
+		fixtureDef.shape = polygonShape;
+		fixtureDef.userData = "topleft";
+		body.createFixture(fixtureDef);
+
+		polygonShape.setAsEdge(toptrv, topbrv);
+		fixtureDef.shape = polygonShape;
+		fixtureDef.userData = "topright";
 		body.createFixture(fixtureDef);
 
 

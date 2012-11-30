@@ -1,49 +1,23 @@
 package pt.bombap.playn.natal.core;
 
-import static playn.core.PlayN.*;
-import static pt.bombap.playn.natal.core.MathUtils.*;
+import static playn.core.PlayN.assets;
+import static playn.core.PlayN.graphics;
+import static playn.core.PlayN.log;
+import static playn.core.PlayN.pointer;
+import static playn.core.PlayN.random;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
-import javax.sql.PooledConnection;
-
-import org.jbox2d.collision.Distance;
-import org.jbox2d.collision.shapes.CircleShape;
-import org.jbox2d.collision.shapes.PolygonShape;
-import org.jbox2d.collision.shapes.Shape;
-import org.jbox2d.collision.shapes.ShapeType;
-import org.jbox2d.common.Settings;
 import org.jbox2d.common.Vec2;
-import org.jbox2d.dynamics.Body;
-import org.jbox2d.dynamics.BodyDef;
-import org.jbox2d.dynamics.BodyType;
-import org.jbox2d.dynamics.FixtureDef;
-import org.jbox2d.dynamics.World;
-import org.jbox2d.dynamics.contacts.Contact;
-import org.jbox2d.pooling.WorldPool;
 
 import playn.core.Game;
 import playn.core.GroupLayer;
 import playn.core.Image;
 import playn.core.ImageLayer;
-import playn.core.PlayN;
+import playn.core.Layer;
 import playn.core.Pointer;
 import playn.core.Pointer.Event;
-import playn.core.Surface;
-import playn.core.SurfaceLayer;
-import pt.bombap.playn.extensions.sprites.SpriteAnimator;
-import react.UnitSlot;
-import tripleplay.ui.Background;
-import tripleplay.ui.Button;
-import tripleplay.ui.Group;
-import tripleplay.ui.Interface;
-import tripleplay.ui.Label;
-import tripleplay.ui.Root;
-import tripleplay.ui.SimpleStyles;
-import tripleplay.ui.Style;
-import tripleplay.ui.layout.AxisLayout;
 
 public class Natal implements Game {
 	public static final float MAX_VELOCITY = 20f;
@@ -53,8 +27,7 @@ public class Natal implements Game {
 
 
 	public static final float INITIAL_VELOCITY = -2f;
-
-
+	
 	private float screenWidth = 0.0f;
 	private float screenHeight = 0.0f;
 
@@ -64,10 +37,16 @@ public class Natal implements Game {
 	float wh = 0.0f;
 	float wGroundTop = 0.0f;
 	float wGroundHeight = 0.0f;
+	float wSkyHeight = 0.0f;
+	int lifes = 3;
 
+	public static LifesCounter lifesCounter;
+	
 	private int travelledDistance = 0;
 	private int activeChimneys = 0;
 	private List<Float> activeChimneysPositions;
+
+	private ImageLayer gameAreaLayer;
 
 	private float worldVelocity = -INITIAL_VELOCITY;
 	private float cloudVelocity = -INITIAL_VELOCITY;
@@ -151,17 +130,28 @@ public class Natal implements Game {
 	 * world ground height
 	 * @return
 	 */
-	public float wgh(float decimal) {
-		return wGroundHeight * decimal + wGroundTop;
+	public float wgh(float percent) {
+		return wGroundHeight * percent + wGroundTop;
 	}
 
-	public float ww(float decimal) {
-		return ww * decimal;
+	public float ww(float percent) {
+		return ww * percent;
+	}
+	
+	/**
+	 * @return world sky height
+	 */
+	public float wsh(float percent) {
+		return wSkyHeight * percent;
 	}
 
 	public float windSpeedToMeterSpeed(float windSpeed) {
 		if(windSpeed < 0) windSpeed = -windSpeed;
 		return windSpeed * MAX_METER_VELOCITY / MAX_VELOCITY;
+	}
+
+	public float meterSpeedToWindSpeedTo(float meterSpeed) {
+		return meterSpeed * MAX_VELOCITY / MAX_METER_VELOCITY;
 	}
 
 	@Override
@@ -170,6 +160,9 @@ public class Natal implements Game {
 		Image bgImage = assets().getImage("images/full_moon_sky1.png");
 		ImageLayer bgLayer = graphics().createImageLayer(bgImage);
 
+		Image gameAreaImage = assets().getImage("images/touch_area.png");
+		gameAreaLayer = graphics().createImageLayer(gameAreaImage);
+
 		screenWidth = graphics().width();
 		screenHeight = graphics().height();
 
@@ -177,9 +170,9 @@ public class Natal implements Game {
 		log().debug("" + screenWidth);
 		log().debug("" + screenHeight);
 
-		bgLayer.setSize(screenWidth, screenHeight);
+		//bgLayer.setSize(screenWidth, screenHeight);
+		//graphics().rootLayer().add(bgLayer);
 
-		graphics().rootLayer().add(bgLayer);
 
 		startMenu = new Menu();
 
@@ -188,14 +181,27 @@ public class Natal implements Game {
 
 		ww = world.getWorldWidth();
 		wh = world.getWorldHeight();
-
+		
 		wGroundTop = wh * (2 / 3f);
 		wGroundHeight = wh - wGroundTop;
-
+		wSkyHeight = wGroundTop;
+		
+		bgLayer.setSize(ww, wh);
+		world.getBackgroundLayer().add(bgLayer);
+		
+		gameAreaLayer.setSize(ww, wsh(0.20f));
+		world.getBackgroundLayer().add(gameAreaLayer);
+	
 		//wind meter diameter
-		float wmd = 4.0f;
+		float wmd = 3.5f;
 		windMeter = new WindMeter(world, wmd, wmd, ww - wmd / 2.0f, 0.0f + wmd / 2.0f, 0.0f);
 		windMeter.setValue(windSpeedToMeterSpeed(cloudVelocity));
+		
+		float lifesW = wmd / 4f;
+		float lifesH = 0.25f * wmd;
+		
+		lifesCounter = new LifesCounter(world, lifesW, lifesH, ww - 1.4f * lifesH / 2.0f, 0.0f + wmd * 1.2f, 0.0f);
+		//lifesCounter.setValue(3);
 
 		levels = new ArrayList<Natal.Level>(100);
 
@@ -211,9 +217,9 @@ public class Natal implements Game {
 				StaticChimney c;
 				float w = 3f, h = 5f;
 
-				new StaticChimney(world, w, h, ww * (1 / 4f), wh, 0.0f).setStateListener(stateListener);
-				new StaticChimney(world, w, h, ww * (1 / 2f), wh, 0.0f).setStateListener(stateListener);
-				new StaticChimney(world, w, h, ww * (3 / 4f), wh, 0.0f).setStateListener(stateListener);
+				new StaticChimney.SimpleTall(world, ww * (1 / 4f), wh, 0.0f).setStateListener(stateListener);
+				new StaticChimney.Simple(world, ww * (1 / 2f), wh, 0.0f).setStateListener(stateListener);
+				new StaticChimney.Simple(world, ww * (3 / 4f), wh, 0.0f).setStateListener(stateListener);
 			}
 		});
 
@@ -229,12 +235,12 @@ public class Natal implements Game {
 				StaticChimney c;
 				float w = 3f, h = 5f;
 
-				cloudVelocity *= -1.5;
+				cloudVelocity = -5f;
 				cloud.setLinearVelocity(cloudVelocity, 0);
 				windMeter.setValue(windSpeedToMeterSpeed(cloudVelocity));
 
-				new StaticChimney(world, w, h, ww * (1 / 4f), wgh(0.25f), 0.0f).setStateListener(stateListener);
-				new StaticChimney(world, w, h, ww * (1 / 2f), wgh(0.5f), 0.0f).setStateListener(stateListener);
+				new StaticChimney.SimpleFat(world, ww * (1 / 4f), wgh(0.25f), 0.0f).setStateListener(stateListener);
+				new StaticChimney.SimpleFat(world, ww * (1 / 2f), wgh(0.5f), 0.0f).setStateListener(stateListener);
 			}
 		});
 
@@ -254,8 +260,8 @@ public class Natal implements Game {
 				cloud.setLinearVelocity(cloudVelocity, 0);
 				windMeter.setValue(windSpeedToMeterSpeed(cloudVelocity));
 
-				new StaticChimney(world, w, h, ww * (1 / 4f), wgh(0.25f), 0.0f).setStateListener(stateListener);
-				new StaticChimney(world, w, h, ww * (1 / 2f), wgh(0.5f), 0.0f).setStateListener(stateListener);
+				new StaticChimney.SimpleTall(world, ww * (1 / 4f), wgh(0.25f), 0.0f).setStateListener(stateListener);
+				new StaticChimney.SimpleTall(world, ww * (1 / 2f), wgh(0.5f), 0.0f).setStateListener(stateListener);
 			}
 		});
 
@@ -296,18 +302,27 @@ public class Natal implements Game {
 		Building.currentView.setAnimationRate(300);
 		new Building(world, w, h, 0f + w + 0.3f + 15f, world.getWorldHeight() / 2f, 0f);
 
-		pointer().setListener(new Pointer.Adapter(){
+		gameAreaLayer.addListener(new Pointer.Listener() {
+
+			@Override
+			public void onPointerStart(Event event) {
+
+			}
 
 			@Override
 			public void onPointerEnd(Event event) {
-				super.onPointerEnd(event);
 				Present present = new Present(world, world.getPhysUnitPerScreenUnit() * event.x(), world.getPhysUnitPerScreenUnit() * event.y(), 0.0f);
 				Vec2 currentV = present.getLinearVelocity();
 				present.setLinearVelocity(cloudVelocity, currentV.y);
+			}
 
-
+			@Override
+			public void onPointerDrag(Event event) {
 			}
 		});
+
+		
+		activatePointer();
 
 	}
 
@@ -330,29 +345,44 @@ public class Natal implements Game {
 
 	int transitionDistance = 20;
 
+	private void activatePointer() {
+		gameAreaLayer.setInteractive(true);
+		
+//		pointer().setListener(new Pointer.Adapter(){
+//
+//			@Override
+//			public void onPointerEnd(Event event) {
+//				super.onPointerEnd(event);
+//				Present present = new Present(world, world.getPhysUnitPerScreenUnit() * event.x(), world.getPhysUnitPerScreenUnit() * event.y(), 0.0f);
+//				Vec2 currentV = present.getLinearVelocity();
+//				present.setLinearVelocity(cloudVelocity, currentV.y);
+//
+//
+//			}
+//		});
+	}
+	
+	private void deactivatePointer() {
+		gameAreaLayer.setInteractive(false);
+	}
+
+	public void replayLevel() {
+		activatePointer();
+		currentLevel.create();
+		currentLevelDeliveredPresents = 0;
+		log().debug("Replay level: " + currentLevelNumber);
+
+		showingNextLevelMenu = false;
+	}
 
 	public void startNextLevel() {
-		
-		pointer().setListener(new Pointer.Adapter(){
-
-			@Override
-			public void onPointerEnd(Event event) {
-				super.onPointerEnd(event);
-				Present present = new Present(world, world.getPhysUnitPerScreenUnit() * event.x(), world.getPhysUnitPerScreenUnit() * event.y(), 0.0f);
-				Vec2 currentV = present.getLinearVelocity();
-				present.setLinearVelocity(cloudVelocity, currentV.y);
-
-
-			}
-		});
-		
-		
+		activatePointer();
 		currentLevel = levels.remove(0);
 		currentLevel.create();
 		currentLevelNumber++;
 		currentLevelDeliveredPresents = 0;
 		log().debug("New level: " + currentLevelNumber);
-		
+
 		showingNextLevelMenu = false;
 	}
 
@@ -369,12 +399,10 @@ public class Natal implements Game {
 				if(levels.isEmpty()) {
 					log().debug("Finish!!!");
 				} else {
-					pointer().setListener(null);
+					deactivatePointer();
 					nextLevelMenu = new NextLevelMenu(world.getMenuLayer());
 					nextLevelMenu.init();
 					showingNextLevelMenu = true;
-					
-					
 
 				}
 			}
@@ -388,23 +416,41 @@ public class Natal implements Game {
 
 		public NextLevelMenu(GroupLayer menuLayer) {
 			nextLevelLayer = graphics().createGroupLayer();
+			nextLevelLayer.setTranslation(ww/2f, wh/2f);
 			menuLayer.add(nextLevelLayer);
 		}
 
 
 		public void init() {
-			ImageView view = new ImageView("images/next.png");
-			view.setOrigin(view.getWidth() / 2f, view.getHeight() / 2f);
-			view.setScale(3f / view.getWidth(), 3f / view.getHeight());
-			view.setTranslation(ww /2f, wh /2f);
-			view.setRotation(0f);
-			nextLevelLayer.add(view.getLayer());
-			
-			view.getLayer().addListener(new Pointer.Listener() {
+			float iconW = 2f;
+			float iconH = 2f;
+			float menuW = 8f;
+			float menuH = 8f;
+			float iconDistance = 1.5f;
+
+			ImageView menu = new ImageView("images/3star.png");
+			menu.setOrigin(menu.getWidth() / 2f, menu.getHeight() / 2f);
+			menu.setScale(menuW / menu.getWidth(), menuH / menu.getHeight());
+			nextLevelLayer.add(menu.getLayer());
+
+
+			ImageView next = new ImageView("images/next.png");
+			next.setOrigin(next.getWidth() / 2f, next.getHeight() / 2f);
+			next.setScale(iconW / next.getWidth(), iconW / next.getHeight());
+			next.setTranslation(iconDistance, 0f);
+			nextLevelLayer.add(next.getLayer());
+
+			ImageView replay = new ImageView("images/replay.png");
+			replay.setOrigin(replay.getWidth() / 2f, replay.getHeight() / 2f);
+			replay.setScale(iconW / replay.getWidth(), iconH / replay.getHeight());
+			replay.setTranslation(-iconDistance, 0f);
+			nextLevelLayer.add(replay.getLayer());
+
+			next.getLayer().addListener(new Pointer.Listener() {
 
 				@Override
 				public void onPointerStart(Event event) {
-					
+
 				}
 
 				@Override
@@ -417,6 +463,25 @@ public class Natal implements Game {
 				public void onPointerDrag(Event event) {
 				}
 			});
+
+			replay.getLayer().addListener(new Pointer.Listener() {
+
+				@Override
+				public void onPointerStart(Event event) {
+
+				}
+
+				@Override
+				public void onPointerEnd(Event event) {
+					nextLevelLayer.destroy();
+					replayLevel();
+				}
+
+				@Override
+				public void onPointerDrag(Event event) {
+				}
+			});
+
 		}
 
 	}

@@ -24,6 +24,7 @@ public class NatalWorld extends GameWorld {
 	//public static float physUnitPerScreenUnit = 1 / 26.666667f;
 	public static float physUnitPerScreenUnit = 1 / 20.0f;
 
+	private GroupLayer backgroundLayer;
 
 	private GroupLayer staticLayerBack;
 	private GroupLayer dynamicLayer;
@@ -42,6 +43,8 @@ public class NatalWorld extends GameWorld {
 	}
 
 	public void init() {
+		backgroundLayer = graphics().createGroupLayer();
+		worldLayer.add(backgroundLayer);
 		staticLayerBack = graphics().createGroupLayer();
 		worldLayer.add(staticLayerBack);
 		dynamicLayer = graphics().createGroupLayer();
@@ -69,6 +72,10 @@ public class NatalWorld extends GameWorld {
 		wallRightShape.setAsEdge(new Vec2(worldWidth, 0), new Vec2(worldWidth, worldHeight));
 		wallRight.createFixture(wallRightShape, 0.0f);
 
+	}
+	
+	public GroupLayer getBackgroundLayer() {
+		return backgroundLayer;
 	}
 
 	public GroupLayer getStaticLayerBack() {
