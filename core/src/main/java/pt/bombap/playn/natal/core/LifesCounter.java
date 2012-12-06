@@ -10,6 +10,7 @@ import static playn.core.PlayN.*;
 
 public class LifesCounter extends Widget<Integer>{
 	private Stack<ImageView> views = new Stack<ImageView>();
+	private Stack<ImageView> hiddenViews = new Stack<ImageView>();
 	
 	public LifesCounter(final GameWorld gameWorld, final float width, final float height, float px, float py, float pangle) {
 		super(gameWorld, width, height, px, py, pangle);
@@ -52,16 +53,29 @@ public class LifesCounter extends Widget<Integer>{
 			}
 		});
 		
-		views.push((ImageView) getView());
-		views.push(v);
-		views.push(v2);
-
-		
+		hiddenViews.push(v2);
+		hiddenViews.push(v);
+		hiddenViews.push((ImageView) getView());
+				
 	} 
 
 	@Override
 	public void setValue(Integer value) {
-		views.pop().getLayer().destroy();
+		assert value >= -3 && value <= 3;
+		
+		for(int i = 0; i < value; i++) {
+			views.push(hiddenViews.pop());
+		}
+		for(int i = 0; i > value; i--) {
+			hiddenViews.push(views.pop());
+		}
+		
+		for(View v: views) {
+			v.getLayer().setVisible(true);
+		}
+		for(View v: hiddenViews) {
+			v.getLayer().setVisible(false);
+		}
 	}
 
 	@Override

@@ -193,6 +193,9 @@ public abstract class Entity {
 			world.markEntityDirty(this);
 			destroy(world);
 			log().debug("out: " + this);
+			if(stateListener != null) {
+				stateListener.notify(this, Code.OUT_OF_WORLD);
+			}
 		}
 	}
 
