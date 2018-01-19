@@ -12,9 +12,13 @@ import org.jbox2d.dynamics.FixtureDef;
 import org.jbox2d.dynamics.World;
 import org.jbox2d.dynamics.contacts.Contact;
 
+import playn.core.PlayN;
+import playn.core.ResourceCallback;
+
 public class StaticChimney extends NatalEntity implements PhysicsEntity.HasContactListener {
 	public static String TYPE = "Chimney";
 	private NatalWorld world;
+	private SpriteView base;
 	
 	public static class Simple extends StaticChimney {
 		public Simple(GameWorld gameWorld, float px, float py, float pangle) {
@@ -23,12 +27,12 @@ public class StaticChimney extends NatalEntity implements PhysicsEntity.HasConta
 		
 		@Override
 		public float getWidth() {
-			return 5.75f;
+			return 5.75f / 2f;
 		}
 		
 		@Override
 		public float getHeight() {
-			return 5.15f;
+			return 5.15f / 2f;
 		}
 		
 		@Override
@@ -47,12 +51,12 @@ public class StaticChimney extends NatalEntity implements PhysicsEntity.HasConta
 		
 		@Override
 		public float getWidth() {
-			return 5.35f;
+			return 5.35f / 2f;
 		}
 		
 		@Override
 		public float getHeight() {
-			return 7.95f;
+			return 7.95f / 2f;
 		}
 		
 		@Override
@@ -71,12 +75,12 @@ public class StaticChimney extends NatalEntity implements PhysicsEntity.HasConta
 		
 		@Override
 		public float getWidth() {
-			return 5.35f;
+			return 5.35f / 2f;
 		}
 		
 		@Override
 		public float getHeight() {
-			return 4.35f;
+			return 4.35f / 2f;
 		}
 		
 		@Override
@@ -88,9 +92,32 @@ public class StaticChimney extends NatalEntity implements PhysicsEntity.HasConta
 	}
 	
 
-	public StaticChimney(GameWorld gameWorld, float px, float py, float pangle) {
+	public StaticChimney(final GameWorld gameWorld, float px, float py, float pangle) {
 		super(gameWorld, px, py, pangle);
 		world = (NatalWorld) gameWorld;
+		base = new SpriteView("sprites/chimneys_base.json");
+		base.setRandomSprite();
+		
+		final float bw = getWidth() * 1.1f;
+		final float bh = getHeight() / 5f;
+		
+		base.addCallback(new ResourceCallback<View>() {
+			@Override
+			public void done(View view) {
+				// since the image is loaded, we can use its width and height
+				view.setOrigin(view.getWidth() / 2f, view.getHeight() / 2f);
+				view.setScale(bw / view.getWidth(), bh / view.getHeight());
+				view.setTranslation(x, y);
+				
+				((NatalWorld)gameWorld).getStaticLayerBack().add(base.getLayer());
+			}
+
+			@Override
+			public void error(Throwable err) {
+				PlayN.log().error("Error loading view: " + err.getMessage());
+			}
+		});
+		
 	}
 	
 	@Override
@@ -175,6 +202,12 @@ public class StaticChimney extends NatalEntity implements PhysicsEntity.HasConta
 	@Override
 	protected float[] getViewOrigin(View view) {
 		return new float[] {view.getWidth() / 2.0f, view.getHeight()};
+	}
+	
+	@Override
+	protected void destroy(GameWorld gameWorld) {
+		super.destroy(gameWorld);
+		((NatalWorld)gameWorld).getStaticLayerBack().remove(base.getLayer());
 	}
 
 	@Override

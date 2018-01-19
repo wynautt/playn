@@ -1,6 +1,7 @@
 {
-  "urls": ["sprites/present1.jpg"],
+  "urls": ["sprites/presents.png"],
   "sprites": [
-    {"id": "c1", "url": 0, "x": 0, "y": 0, "w": 63, "h": 67}
+    {"id": "100001", "url": 0, "x":0,"y":0,"w":137,"h":158},
+    {"id": "100002", "url": 0, "x":139,"y":0,"w":111,"h":103}
   ]
 }

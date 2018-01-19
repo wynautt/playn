@@ -75,6 +75,10 @@ public class SpriteView extends View {
 		}
 	}
 	
+	public void setRandomSprite() {
+		sprite.setRandomSprite();
+	}
+	
 	public void changeSprite(int index) {
 		sprite.setSprite(index);
 	}

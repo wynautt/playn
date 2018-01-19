@@ -9,6 +9,7 @@ public class NatalJava {
 
   public static void main(String[] args) {
     JavaPlatform platform = JavaPlatform.register();
+    platform.graphics().setSize(854, 480);
     platform.assets().setPathPrefix("pt/bombap/playn/natal/resources");
     PlayN.run(new Natal());
   }

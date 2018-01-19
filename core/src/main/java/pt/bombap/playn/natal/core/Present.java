@@ -1,6 +1,7 @@
 package pt.bombap.playn.natal.core;
 
 import org.jbox2d.collision.shapes.CircleShape;
+import org.jbox2d.collision.shapes.MassData;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.BodyDef;
@@ -11,10 +12,37 @@ import org.jbox2d.dynamics.World;
 
 public class Present extends NatalDynamicEntity {
 	public static String TYPE = "Present";
+	
+	private int type;
 
 	public Present(GameWorld gameWorld, float x, float y, float angle) {
 		super(gameWorld, x, y, angle);
 		autoDestroyWhenOutOfWorld = true;
+		
+	}
+	
+	public void setType(int type) {
+		SpriteView v = (SpriteView) getView();
+		v.changeSprite("" + type);
+		
+		switch (type) {
+		case Code.PRESENT_G1000:
+			//getBody().applyLinearImpulse(new Vec2(0, 10), getBody().getWorldCenter());
+			getBody().setLinearVelocity(new Vec2(0, getBody().getLinearVelocity().y));
+			break;
+
+		default:
+			break;
+		}
+	}
+	
+	@Override
+	protected void viewLoaded(View view, GameWorld gameWorld) {
+		float[] origin = getViewOrigin(view);
+		view.setOrigin(origin[0], origin[1]);
+		view.setScale(getWidth() / view.getWidth(), getHeight() / view.getHeight());
+		view.setTranslation(x, y);
+		view.setRotation(angle);
 	}
 
 	@Override
@@ -50,14 +78,13 @@ public class Present extends NatalDynamicEntity {
 	}
 
 	float getRadius() {
-		return 1.0f;
+		return 1.0f / 2f;
 		//return 0.5f;
 	}
 
 	@Override
 	public View createView() {
-		//return new ImageView("sprites/pea.png");
-		return new SpriteView("sprites/sprites.json");
+		return new SpriteView("sprites/present_types.json");
 	}
 
 }

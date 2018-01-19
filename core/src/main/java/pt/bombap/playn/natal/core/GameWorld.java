@@ -36,13 +36,15 @@ import playn.core.PlayN;
  *
  */
 public abstract class GameWorld implements IGameWorld, ContactListener {
-	private static boolean showDebugDraw = true;
+	private static boolean showDebugDraw = false;
 
 	// main layer that holds the world. note: this gets scaled to world space
 	protected GroupLayer worldLayer;
 
 	protected List<Entity> entities = new ArrayList<Entity>(10);
 	protected List<Entity> dirtyEntities = new ArrayList<Entity>(5);
+	
+	protected List<IStateListener<Entity>> outOfWorldListeners = new ArrayList<IStateListener<Entity>>(10);
 
 	protected HashMap<Body, PhysicsEntity> bodyEntityTable = new HashMap<Body, PhysicsEntity>();
 	protected Stack<Contact> contacts = new Stack<Contact>();
@@ -371,6 +373,21 @@ public abstract class GameWorld implements IGameWorld, ContactListener {
 
 	public void destroyOutOfWorldEntities(Filter<Entity> filter) {
 		destroyEntities(new AndFilter<Entity>(filter, outOfWorldEntityFilter));
+	}
+	
+	public enum EntityState {
+		OUT_OF_WORLD
+	}
+	
+	public void addListener(EntityState state, IStateListener<Entity> listener) {
+		switch (state) {
+		case OUT_OF_WORLD:
+			outOfWorldListeners.add(listener);
+			break;
+
+		default:
+			break;
+		}
 	}
 
 

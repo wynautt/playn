@@ -26,6 +26,7 @@ import java.util.List;
 import playn.core.Asserts;
 import playn.core.Image;
 import playn.core.ImageLayer;
+import playn.core.PlayN;
 import playn.core.ResourceCallback;
 
 /**
@@ -80,6 +81,10 @@ public class Sprite {
 	  clone.doneLoadingImages();
 	  
 	  return clone;
+  }
+  
+  public void setRandomSprite() {
+	  setSprite((int)(PlayN.random() * (numSprites() - 1)));
   }
   
 
